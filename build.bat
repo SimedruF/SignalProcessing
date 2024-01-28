@@ -1,0 +1,1 @@
+ gcc SignalProcessing.cpp test.cpp -o test.exe
