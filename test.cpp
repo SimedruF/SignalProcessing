@@ -1,21 +1,29 @@
 #include "test.h"
 #include "SignalProcessing.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
-#define BLADE_1 1
-#define BLADE_2 2
-#define BLADE_3 3
-#define BLADE_4 4
-#define BLADE_5 5
-#define BLADE_6 6
-#define BLADE_7 7
-#define BLADE_8 8
-#define BLADE_9 9
-#define BLADE_10 10
-#define BLADE_11 11
+#define BLADE_1 0
+#define BLADE_2 1
+#define BLADE_3 2
+#define BLADE_4 3
+#define BLADE_5 4
+#define BLADE_6 5
+#define BLADE_7 6
+#define BLADE_8 7
+#define BLADE_9 8
+#define BLADE_10 9
+#define BLADE_11 10
 #define NB_MAX_VALUES_TEST 10000
 timespec timestamp;
+
+double fRand(double fMin, double fMax)
+{
+    /*double f = (double)rand()/ RAND_MAX;*/
+    /*return fMin + f * (fMax - fMin);*/
+    return (double)((rand() % ((int)fMax - (int)fMin + 1)) + (int)fMin);
+}
 
 int main()
 {
@@ -134,5 +142,43 @@ int main()
         printf(" Vector[%d]: %f \n", i, SigProcVector[i]);
     }
 
+
+    /**
+     * @brief Test normal distribution
+     * 
+     */
+    Vector1[BLADE_1].ClearVector();
+    Vector1[BLADE_2].ClearVector();
+    Vector1[BLADE_3].ClearVector();
+
+    for (int i = 0; i < Vector1[BLADE_1].GetMaxCapacity(); i++)
+    {
+        Vector1[BLADE_1].AddValue(fRand(1.0, 300.0));
+    }
+    for (int i = 0; i < Vector1[BLADE_1].GetMaxCapacity(); i++)
+    {
+        Vector1[BLADE_2].AddValue(fRand(20.0, 500.0));
+    }
+    for (int i = 0; i < Vector1[BLADE_1].GetMaxCapacity(); i++)
+    {
+        Vector1[BLADE_3].AddValue(fRand(10.0, 20.0));
+    }
+
+    Vector1[BLADE_1].PrintVector();
+    local_index = Vector1[BLADE_1].GetIndex();
+    printf("\nIndex = %d, blade: %d\n", local_index, Vector1[BLADE_1].GetItem());
+
+    Vector1[BLADE_2].PrintVector();
+    local_index = Vector1[BLADE_2].GetIndex();
+    printf("\nIndex = %d, blade: %d\n", local_index, Vector1[BLADE_2].GetItem());
+
+    Vector1[BLADE_3].PrintVector();
+    local_index = Vector1[BLADE_3].GetIndex();
+    printf("\nIndex = %d, blade: %d\n", local_index, Vector1[BLADE_3].GetItem());
+
+    Vector1[BLADE_1].NormalDistributionRun();
+    Vector1[BLADE_2].NormalDistributionRun();
+    Vector1[BLADE_3].NormalDistributionRun();
+
     return 0;
-}
+    }
