@@ -58,10 +58,10 @@ int main()
 
     // get timestamp for blade 1 
     Vector1[BLADE_1].GetTimespec(&timestamp, 0);
-    printf(" Timstamp Blade 1: %d\n", timestamp.tv_sec);
+    printf(" Timstamp Blade 1: %Id\n", timestamp.tv_sec);
     // get timestamp for blade 2
     Vector1[BLADE_2].GetTimespec(&timestamp, 0);
-    printf(" Timstamp Blade 2: %d\n", timestamp.tv_sec);
+    printf(" Timstamp Blade 2: %Id\n", timestamp.tv_sec);
 
     printf(" Index:%d, blade: %d\n", Vector1[BLADE_1].AddValue(6.5454), Vector1[BLADE_1].GetItem());
     printf(" Index:%d, blade: %d\n ", Vector1[BLADE_2].AddValue(7.5454), Vector1[BLADE_2].GetItem());
@@ -141,8 +141,6 @@ int main()
     {
         printf(" Vector[%d]: %f \n", i, SigProcVector[i]);
     }
-
-
     /**
      * @brief Test normal distribution
      * 
@@ -153,11 +151,11 @@ int main()
 
     for (int i = 0; i < Vector1[BLADE_1].GetMaxCapacity(); i++)
     {
-        Vector1[BLADE_1].AddValue(fRand(1.0, 300.0));
+        Vector1[BLADE_1].AddValue(fRand(20.0, 60.0));
     }
     for (int i = 0; i < Vector1[BLADE_1].GetMaxCapacity(); i++)
     {
-        Vector1[BLADE_2].AddValue(fRand(20.0, 500.0));
+        Vector1[BLADE_2].AddValue(fRand(20.0, 50.0));
     }
     for (int i = 0; i < Vector1[BLADE_1].GetMaxCapacity(); i++)
     {
@@ -180,5 +178,13 @@ int main()
     Vector1[BLADE_2].NormalDistributionRun();
     Vector1[BLADE_3].NormalDistributionRun();
 
+/**
+ * @brief Testing memory allocation erase
+ * 
+ */
+    Vector1[BLADE_1].NormalDistributionFree();
+    Vector1[BLADE_2].NormalDistributionFree();
+    Vector1[BLADE_3].NormalDistributionFree();
+
     return 0;
-    }
+}

@@ -40,7 +40,8 @@ void SignalProcessing::ClearVector()
 /// @return this->index
 int SignalProcessing::AddValue(double value)
 {
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &(this->signal_timestamp[this->index]));
+	
+    //clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &(this->signal_timestamp[this->index]));
 	this->SignalVector[this->index] = value;
 	if ((this->index >= NB_MAX_VALUES) || (this->index < 0))
 	{
@@ -333,7 +334,7 @@ void SignalProcessing::NormalDistributionPrint(prob_dist *pd)
 
 	for (int i = 0; i < pd->count; i++)
 	{
-		printf("%5d |%12.6lf |%12.4lf |%5d |%12.4lf\n", pd->items[i].value, pd->items[i].probability, pd->items[i].normal_probability, pd->items[i].frequency, pd->items[i].normal_frequency);
+		printf("%f |%12.6lf |%12.4lf |%5d |%12.4lf\n", pd->items[i].value, pd->items[i].probability, pd->items[i].normal_probability, pd->items[i].frequency, pd->items[i].normal_frequency);
 	}
 
 	printf("------------------------------------------------------\n");
@@ -346,10 +347,10 @@ void SignalProcessing::NormalDistributionPrint(prob_dist *pd)
 /// @brief Free memory allocated for prob_dist
 /// @param pd probability distribution
 /// @return void
-void SignalProcessing::NormalDistributionFree(prob_dist *pd)
+void SignalProcessing::NormalDistributionFree()
 {
-	free(pd->items);
-	free(pd);
+	free(this->p_d->items);
+	free(this->p_d);
 }
 
 /// @fn IndexOf
@@ -377,7 +378,8 @@ int SignalProcessing::IndexOf(double value, prob_dist *pd)
 /// @return void
 void SignalProcessing::NormalDistributionRun()
 {
-	this->NormalDistributionCalculate(this->SignalVector, sizeof(this->GetIndex()), this->p_d);
+	this->p_d = this->NormalDistributionCreate();
+	this->NormalDistributionCalculate(this->SignalVector, this->GetIndex(), this->p_d);
 	this->NormalDistributionPrint(this->p_d);
 }
 

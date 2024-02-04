@@ -52,7 +52,7 @@ public:
     void AddWithValue(double value, int size);
     void GetVectorWithOffset(double *signalProc_vector,int size, int offset);
     void ClearVector();
-    void NormalDistributionFree(prob_dist *pd);
+    void NormalDistributionFree();
     void NormalDistributionPrint(prob_dist *pd);
     void NormalDistributionCalculate(double *data, int size, prob_dist *pd);
     prob_dist *NormalDistributionCreate();

@@ -83,12 +83,50 @@
 				"name": "(Windows) Launch Signal processing test",
 				"type": "cppvsdbg",
 				"request": "launch",
-				"program": "${workspaceFolder}/test.exe",
-				"args": [],
+				"program": "${workspaceFolder}/Debug/test.exe",
+				"args": ["--help"],
 				"stopAtEntry": false,
 				"cwd": "",
 				"environment": [],
-				"console": "externalTerminal"
+				"console": "internalConsole",
+	 		},
+			{
+				"name": "C++ Launch (Windows)",
+				"type": "cppvsdbg",
+				"request": "launch",
+				"program": "${workspaceFolder}\\test.exe",
+				"symbolSearchPath": "${workspaceFolder}",
+				"console": "internalConsole",
+				"logging": {
+					"moduleLoad": false,
+					"trace": true
+				},
+				"cwd": "${workspaceFolder}",
+				"stopAtEntry": true,
+				"visualizerFile": "${workspaceFolder}/my.natvis"
+			},
+			{
+				"name": "C++ Launch Windows",
+				"type": "cppdbg",
+				"request": "launch",
+				"program": "${workspaceFolder}\\test.exe",
+				"stopAtEntry": false,
+				"cwd": "${workspaceFolder}",
+				"args": [],
+				"console": "externaslTerminal",
+				"targetArchitecture":"x64",
+				/*"customLaunchSetupCommands": [
+					{
+						"text": "",
+						"description": "run target",
+						"ignoreFailures": false
+					}
+				],*/
+				"launchCompleteCommand": "exec-run",
+				"windows": {
+					"MIMode": "gdb",
+					"miDebuggerPath": "C:\\MinGw\\bin\\gdb.exe"
+				}
 			}
 
 		]
