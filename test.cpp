@@ -41,7 +41,7 @@ int main()
         42.3
     };
     int local_index;
-    SignalProcessing Vector1[3];
+    SignalProcessing Vector1[6];
 
     // set blade 1 and 2
     Vector1[BLADE_1].SetItem(BLADE_1);
@@ -183,8 +183,24 @@ int main()
  * 
  */
     Vector1[BLADE_1].NormalDistributionFree();
+    
     Vector1[BLADE_2].NormalDistributionFree();
+    
     Vector1[BLADE_3].NormalDistributionFree();
 
+    Vector1[BLADE_1].BuildIndexLookupTable(4);
+    printf("\nNormalized Index = %d for received index %d\n", Vector1[BLADE_1].GetIndexLookupTable(0), 0);
+    Vector1[BLADE_2].BuildIndexLookupTable(5);
+    printf("\nNormalized Index = %d for received index %d\n", Vector1[BLADE_2].GetIndexLookupTable(2), 2);
+    Vector1[BLADE_3].BuildIndexLookupTable(6);
+    printf("\nNormalized Index = %d for received index %d\n", Vector1[BLADE_3].GetIndexLookupTable(7), 7);
+    Vector1[BLADE_4].BuildIndexLookupTable(0);
+    printf("\nNormalized Index = %d for received index %d\n", Vector1[BLADE_4].GetIndexLookupTable(10), 10);
+    Vector1[BLADE_5].BuildIndexLookupTable(10);
+    printf("\nNormalized Index = %d for received index %d\n", Vector1[BLADE_5].GetIndexLookupTable(2), 2);
+    Vector1[BLADE_1].BuildIndexLookupTable(11);
+    printf("\nNormalized Index = %d for received index %d\n", Vector1[BLADE_1].GetIndexLookupTable(1), 1);
+    Vector1[BLADE_1].BuildIndexLookupTable(0);
+    printf("\nNormalized Index = %d for received index %d\n", Vector1[BLADE_1].GetIndexLookupTable(3), 3);
     return 0;
 }

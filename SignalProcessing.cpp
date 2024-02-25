@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <math.h>
-
+#include <chrono>
 #ifndef M_PI
 #define M_PI 3.14159
 #endif
@@ -40,8 +40,8 @@ void SignalProcessing::ClearVector()
 /// @return this->index
 int SignalProcessing::AddValue(double value)
 {
-	
     //clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &(this->signal_timestamp[this->index]));
+	static std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 	this->SignalVector[this->index] = value;
 	if ((this->index >= NB_MAX_VALUES) || (this->index < 0))
 	{
@@ -380,7 +380,44 @@ void SignalProcessing::NormalDistributionRun()
 {
 	this->p_d = this->NormalDistributionCreate();
 	this->NormalDistributionCalculate(this->SignalVector, this->GetIndex(), this->p_d);
-	this->NormalDistributionPrint(this->p_d);
+	//this->NormalDistributionPrint(this->p_d);
+}
+void SignalProcessing::BuildIndexLookupTable(int first_received)
+{
+	int received_ref = first_received;
+	for (int i = 0; i < MAX_INDX; i++)
+	{
+		if ((first_received + i) >= MAX_INDX)
+		{
+			index_lookup[i].received = first_received - received_ref;
+			received_ref --;
+		}
+		else
+		{
+			index_lookup[i].received = first_received + i;
+		}
+		index_lookup[i].normal = i;
+		#if DEBUG_INFO == 1
+		printf("Received = %d", index_lookup[i].received);
+		printf(" Normal = %d \n", index_lookup[i].normal);
+		#endif
+	}
+	
+}
+/// @brief Get index of lookup table
+/// @param ReceivedIndex 
+/// @return Returns the normalized index
+int SignalProcessing::GetIndexLookupTable(int ReceivedIndex)
+{
+	for (int i = 0; i < MAX_INDX; i++)
+	{
+		if (index_lookup[i].received == ReceivedIndex)
+		{
+			return (index_lookup[i].normal);
+		}
+		
+	}
+	return 0;
 }
 
 /// @fn CompareProbDistItem

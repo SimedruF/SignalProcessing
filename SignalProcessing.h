@@ -1,7 +1,9 @@
 #ifndef SIGNALPROCESSING_H
 #define SIGNALPROCESSING_H
-#define NB_MAX_VALUES 100 /* number of values in the signal vector  */
+#define NB_MAX_VALUES 1000 /* number of values in the signal vector  */
 #define NS_PER_SECOND 1000000000
+#define DEBUG_INFO 1
+#define MAX_INDX 12
 #include <time.h>
 #include <math.h>
 // --------------------------------------------------------
@@ -30,6 +32,11 @@ typedef struct prob_dist
     double total_normal_frequency;
 } prob_dist;
 
+typedef struct index_lookup_table
+{
+    int received;
+    int normal;
+} index_lookup_table;
 class SignalProcessing
 {
 public:
@@ -58,21 +65,24 @@ public:
     prob_dist *NormalDistributionCreate();
     void NormalDistributionRun();
     void PrintVector();
+    void BuildIndexLookupTable(int first_received);
+    int  GetIndexLookupTable(int ReceivedIndex);
 
 private:
-    int IndexOf(double value, prob_dist *pd);
-    /**
-     * @brief Signal vector
-     */
-    double SignalVector[NB_MAX_VALUES];
-    timespec signal_timestamp[NB_MAX_VALUES];
-    int item;
-    /**
-     * @brief total number of values added in SignalVector
-     */
-    int index;
-    timespec timestamp;
-    prob_dist *p_d;
-};
+        int IndexOf(double value, prob_dist *pd);
+        /**
+         * @brief Signal vector
+         */
+        double SignalVector[NB_MAX_VALUES];
+        index_lookup_table index_lookup[MAX_INDX];
+        timespec signal_timestamp[NB_MAX_VALUES];
+        int item;
+        /**
+         * @brief total number of values added in SignalVector
+         */
+        int index;
+        timespec timestamp;
+        prob_dist *p_d;
+    };
 
 #endif // SIGNALPROCESSING_H
