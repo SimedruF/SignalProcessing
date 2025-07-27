@@ -1,5 +1,5 @@
 #include "test.h"
-#include "SignalProcessing.h"
+#include "../source/SignalProcessing.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>

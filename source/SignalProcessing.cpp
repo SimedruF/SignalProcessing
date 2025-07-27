@@ -40,8 +40,15 @@ void SignalProcessing::ClearVector()
 /// @return this->index
 int SignalProcessing::AddValue(double value)
 {
+
     //clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &(this->signal_timestamp[this->index]));
+	#ifdef WINDOWS
 	static std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+	#elif defined(__linux__)
+	struct timespec ts; 
+	clock_gettime(CLOCK_REALTIME, &ts);
+	#endif
+	
 	this->SignalVector[this->index] = value;
 	if ((this->index >= NB_MAX_VALUES) || (this->index < 0))
 	{

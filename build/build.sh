@@ -1,0 +1,1 @@
+gcc -o ../build/test ../source/SignalProcessing.cpp ../test/test.cpp -I../source -lm -lrt
