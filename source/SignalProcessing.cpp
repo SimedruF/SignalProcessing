@@ -20,28 +20,28 @@ SignalProcessing::SignalProcessing()
 	{
 		// write the config items in file
 		this->SignalVector[i] = 0.0;
-  	}
+	}
 	this->item = 0;
 	this->index = 0;
 	this->p_d = this->NormalDistributionCreate();
 }
-/// @brief Clear signal processing vector
+/// @brief Clears the signal processing vector
 void SignalProcessing::ClearVector()
 {
 	for (int i = 0; i < NB_MAX_VALUES; i++)
 	{
 		// write the config items in file
 		this->SignalVector[i] = 0.0;
-  	}
+	}
 	this->index = 0;
 }
-/// @brief Add a value to the signal processing vector
-/// @param value Contain the values to be saved in the signal processing vector
+/// @brief Adds a value to the signal processing vector
+/// @param value Value to be saved in the signal processing vector
 /// @return this->index
 int SignalProcessing::AddValue(double value)
 {
 
-    //clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &(this->signal_timestamp[this->index]));
+	//clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &(this->signal_timestamp[this->index]));
 	#ifdef WINDOWS
 	static std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 	#elif defined(__linux__)
@@ -62,9 +62,9 @@ int SignalProcessing::AddValue(double value)
 	return (this->index);
 }
 
-/// @brief Add a value to the signal processing vector
-/// @param td Contain the timestamp of the signal value at index
-/// @param index the index of the signal value
+/// @brief Gets the timestamp for a value in the signal processing vector
+/// @param td Contains the timestamp of the signal value at index
+/// @param index The index of the signal value
 /// @return void
 void SignalProcessing::GetTimespec(struct timespec *td, int index)
 {
@@ -75,45 +75,45 @@ void SignalProcessing::GetTimespec(struct timespec *td, int index)
 	}
 }
 
-/// @brief Get last value of the signal processing vector
+/// @brief Gets the last value of the signal processing vector
 /// @return void
 double SignalProcessing::GetLastValue()
 {
 	return this->SignalVector[this->index-1];
 }
-/// @brief Set item of signal processing vector
-/// @param Item is the item
+/// @brief Sets the item of the signal processing vector
+/// @param Item The item
 /// @return void
 void SignalProcessing::SetItem(int Item)
 {
 	this->item = Item;
 }
-/// @brief Get Max capacity of the signal processing vector
+/// @brief Gets the max capacity of the signal processing vector
 /// @return Max capacity
 int SignalProcessing::GetMaxCapacity()
 {
 	return NB_MAX_VALUES;
 }
-/// @brief Get current index of the signal processing vector
+/// @brief Gets the current index of the signal processing vector
 /// @return Current index
 int SignalProcessing::GetIndex()
 {
 	return (this->index);
 }
-/// @brief Get size of the signal processing vector
+/// @brief Gets the size of the signal processing vector
 /// @return Current index
 int SignalProcessing::GetSize()
 {
 	return (this->GetIndex());
 }
-/// @brief Get number for the signal processing vector
+/// @brief Gets the item number for the signal processing vector
 /// @return Item number
 int SignalProcessing::GetItem()
 {
 	return (this->item);
 }
-/// @brief Get signal processing vector
-/// @param signalProc_vector Contain signal processing vector 
+/// @brief Gets the signal processing vector
+/// @param signalProc_vector Contains the signal processing vector
 /// @return void
 void SignalProcessing::GetVector(double *signalProc_vector)
 {
@@ -125,8 +125,8 @@ void SignalProcessing::GetVector(double *signalProc_vector)
 		}
 	}
 }
-/// @brief Get signal processing vector
-/// @param signalProc_vector Contain int signal processing vector
+/// @brief Gets the signal processing vector as int
+/// @param signalProc_vector Contains int signal processing vector
 /// @return void
 void SignalProcessing::GetVectorInt(int *signalProc_vector, int size)
 {
@@ -139,7 +139,7 @@ void SignalProcessing::GetVectorInt(int *signalProc_vector, int size)
 	}
 }
 
-/// @brief Print signal processing vector
+/// @brief Prints the signal processing vector
 /// @return void
 void SignalProcessing::PrintVector()
 {
@@ -151,8 +151,8 @@ void SignalProcessing::PrintVector()
 }	
 
 
-/// @brief Get signal processing vector
-/// @param signalProc_vector Contain signal processing vector 
+/// @brief Gets the signal processing vector with offset
+/// @param signalProc_vector Contains the signal processing vector
 /// @return void
 void SignalProcessing::GetVectorWithOffset(double *signalProc_vector,int size, int offset)
 {
@@ -164,9 +164,9 @@ void SignalProcessing::GetVectorWithOffset(double *signalProc_vector,int size, i
 		}
 	}
 }
-/// @brief Init signal processing vector
-/// @param values Contain signal processing vector which will be copied to SignalVector
-/// @param size Contain size of the signal processing vector which will be copied to SignalVector
+/// @brief Initializes the signal processing vector
+/// @param values Contains signal processing vector which will be copied to SignalVector
+/// @param size Contains size of the signal processing vector which will be copied to SignalVector
 /// @return void
 void SignalProcessing::InitVector(double *values,int size)
 {
@@ -179,9 +179,9 @@ void SignalProcessing::InitVector(double *values,int size)
 		this->index = size + 1;
 	}
 }
-/// @brief Multiply signal processing vector with a scalar value
-/// @param value Contain value
-/// @param size Number of element which will be multiply
+/// @brief Multiplies the signal processing vector with a scalar value
+/// @param value Value
+/// @param size Number of elements to multiply
 /// @return void
 void SignalProcessing::MultiplyWithValue(double value, int size)
 {
@@ -193,9 +193,9 @@ void SignalProcessing::MultiplyWithValue(double value, int size)
 		}
 	}
 }
-/// @brief Substract signal processing vector with a scalar value
-/// @param value Contain value
-/// @param size Number of element which will be Substract
+/// @brief Subtracts a scalar value from the signal processing vector
+/// @param value Value
+/// @param size Number of elements to subtract
 /// @return void
 void SignalProcessing::SubstractWithValue(double value, int size)
 {
@@ -207,9 +207,9 @@ void SignalProcessing::SubstractWithValue(double value, int size)
 		}
 	}
 }
-/// @brief Divide signal processing vector with a scalar value
-/// @param value Contain value
-/// @param size Number of element which will be Divided
+/// @brief Divides the signal processing vector by a scalar value
+/// @param value Value
+/// @param size Number of elements to divide
 /// @return void
 void SignalProcessing::DivideWithValue(double value, int size)
 {
@@ -224,9 +224,9 @@ void SignalProcessing::DivideWithValue(double value, int size)
 		}
 	}
 }
-/// @brief Add signal processing vector with a scalar value
-/// @param value Contain value
-/// @param size Number of element which will be add
+/// @brief Adds a scalar value to the signal processing vector
+/// @param value Value
+/// @param size Number of elements to add
 /// @return void
 void SignalProcessing::AddWithValue(double value, int size)
 {
@@ -239,7 +239,7 @@ void SignalProcessing::AddWithValue(double value, int size)
 	}
 }
 
-/// @brief Create normal distribution
+/// @brief Creates a normal distribution
 /// @return prob_dist
 prob_dist *SignalProcessing::NormalDistributionCreate()
 {
@@ -256,10 +256,10 @@ prob_dist *SignalProcessing::NormalDistributionCreate()
 	return pd;
 }
 
-/// @brief Calculate Normal distribution
-/// @param data Contain values
-/// @param size Number of element which will be add
-/// @param pd probability distribution 
+/// @brief Calculates the normal distribution
+/// @param data Contains values
+/// @param size Number of elements to add
+/// @param pd Probability distribution
 /// @return void
 void SignalProcessing::NormalDistributionCalculate(double *data, int size, prob_dist *pd)
 {
@@ -332,8 +332,8 @@ void SignalProcessing::NormalDistributionCalculate(double *data, int size, prob_
 	}
 }
 
-/// @brief Print Normal distribution
-/// @param pd probability distribution
+/// @brief Prints the normal distribution
+/// @param pd Probability distribution
 /// @return void
 void SignalProcessing::NormalDistributionPrint(prob_dist *pd)
 {
@@ -351,8 +351,8 @@ void SignalProcessing::NormalDistributionPrint(prob_dist *pd)
 	printf("------------------------------------------------------\n");
 }
 
-/// @brief Free memory allocated for prob_dist
-/// @param pd probability distribution
+/// @brief Frees memory allocated for prob_dist
+/// @param pd Probability distribution
 /// @return void
 void SignalProcessing::NormalDistributionFree()
 {
@@ -361,9 +361,9 @@ void SignalProcessing::NormalDistributionFree()
 }
 
 /// @fn IndexOf
-/// @brief Return the index of value
-/// @param value 
-/// @param pd probability distribution
+/// @brief Returns the index of a value
+/// @param value Value
+/// @param pd Probability distribution
 /// @return int
 int SignalProcessing::IndexOf(double value, prob_dist *pd)
 {
@@ -381,7 +381,7 @@ int SignalProcessing::IndexOf(double value, prob_dist *pd)
 	}
 	return -1;
 }
-/// @brief compute normal distribution and print result
+/// @brief Computes the normal distribution and prints the result
 /// @return void
 void SignalProcessing::NormalDistributionRun()
 {
@@ -411,8 +411,8 @@ void SignalProcessing::BuildIndexLookupTable(int first_received)
 	}
 	
 }
-/// @brief Get index of lookup table
-/// @param ReceivedIndex 
+/// @brief Gets the index from the lookup table
+/// @param ReceivedIndex Received index
 /// @return Returns the normalized index
 int SignalProcessing::GetIndexLookupTable(int ReceivedIndex)
 {
@@ -428,7 +428,7 @@ int SignalProcessing::GetIndexLookupTable(int ReceivedIndex)
 }
 
 /// @fn CompareProbDistItem
-/// @brief Return -1 if a<b ; 1 if a >b else return 0
+/// @brief Returns -1 if a<b ; 1 if a >b else returns 0
 /// @param const void *a
 /// @param const void *b
 /// @return int
