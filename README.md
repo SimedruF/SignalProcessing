@@ -9,23 +9,38 @@ The `SignalProcessing` class provides functions for signal processing, including
 - Calculate normal distribution and probabilities
 - Retrieve and manage timestamps
 - Index lookup table for normalization
+- Moving average (windowed smoothing)
+- Statistical calculations: mean, variance, standard deviation
+- Normalization and scaling (to [0,1] or custom range)
+- Exponential smoothing
 
 ## Function Descriptions
 See comments in `SignalProcessing.h` for details about each public method.
 
 ## How to Build and Test
-Tests are located in `test/test.cpp`. To run the tests:
+Each functionality has a dedicated test file in the `test/` folder:
 
-1. Build the project:
-   ```bash
-   g++ -o test test/test.cpp source/SignalProcessing.cpp -lrt
-   ```
-   (the `-lrt` option is required for POSIX time functions)
+- `test_stats.cpp`: mean, variance, standard deviation
+- `test_moving_average.cpp`: moving average
+- `test_normalize.cpp`: normalization and scaling
+- `test_smoothing.cpp`: exponential smoothing
 
-2. Run the executable:
-   ```bash
-   ./test
-   ```
+To build a test, run the corresponding script (from the `test/` folder):
+
+```bash
+./build_stats.sh
+./build_moving_average.sh
+./build_normalize.sh
+./build_smoothing.sh
+```
+
+To run a test:
+```bash
+./test_stats
+./test_moving_average
+./test_normalize
+./test_smoothing
+```
 
 ## License
 This project is licensed under the MIT License. See the LICENSE file for details.
