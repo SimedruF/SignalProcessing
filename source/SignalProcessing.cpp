@@ -427,6 +427,131 @@ int SignalProcessing::GetIndexLookupTable(int ReceivedIndex)
 	return 0;
 }
 
+/// @brief Calculates the moving average of the last window_size values
+/// @param window_size Number of values to average
+/// @return Moving average value
+double SignalProcessing::GetMovingAverage(int window_size)
+{
+    if (window_size <= 0 || this->index == 0)
+        return 0.0;
+    int start = (this->index > window_size) ? (this->index - window_size) : 0;
+    double sum = 0.0;
+    int count = 0;
+    for (int i = start; i < this->index; ++i)
+    {
+        sum += this->SignalVector[i];
+        count++;
+    }
+    return (count > 0) ? (sum / count) : 0.0;
+}
+
+/// @brief Calculates the moving average for each position and stores it in out_vector
+/// @param out_vector Destination vector
+/// @param window_size Number of values to average
+void SignalProcessing::GetMovingAverageVector(double *out_vector, int window_size)
+{
+    if (out_vector == nullptr || window_size <= 0)
+        return;
+    for (int i = 0; i < this->index; ++i)
+    {
+        int start = (i >= window_size - 1) ? (i - window_size + 1) : 0;
+        double sum = 0.0;
+        int count = 0;
+        for (int j = start; j <= i; ++j)
+        {
+            sum += this->SignalVector[j];
+            count++;
+        }
+        out_vector[i] = (count > 0) ? (sum / count) : 0.0;
+    }
+}
+
+/// @brief Calculates the mean (average) of the signal vector
+/// @return Mean value
+double SignalProcessing::GetMean()
+{
+    if (this->index == 0)
+        return 0.0;
+    double sum = 0.0;
+    for (int i = 0; i < this->index; ++i)
+        sum += this->SignalVector[i];
+    return sum / this->index;
+}
+
+/// @brief Calculates the variance of the signal vector
+/// @return Variance value
+double SignalProcessing::GetVariance()
+{
+    if (this->index == 0)
+        return 0.0;
+    double mean = GetMean();
+    double sum = 0.0;
+    for (int i = 0; i < this->index; ++i)
+        sum += (this->SignalVector[i] - mean) * (this->SignalVector[i] - mean);
+    return sum / this->index;
+}
+
+/// @brief Calculates the standard deviation of the signal vector
+/// @return Standard deviation value
+double SignalProcessing::GetStandardDeviation()
+{
+    return sqrt(GetVariance());
+}
+
+/// @brief Normalizes the signal vector to [0, 1] range
+void SignalProcessing::NormalizeVector()
+{
+    if (this->index == 0)
+        return;
+    double min_val = this->SignalVector[0];
+    double max_val = this->SignalVector[0];
+    for (int i = 1; i < this->index; ++i)
+    {
+        if (this->SignalVector[i] < min_val) min_val = this->SignalVector[i];
+        if (this->SignalVector[i] > max_val) max_val = this->SignalVector[i];
+    }
+    double range = max_val - min_val;
+    if (range == 0.0) return;
+    for (int i = 0; i < this->index; ++i)
+        this->SignalVector[i] = (this->SignalVector[i] - min_val) / range;
+}
+
+/// @brief Scales the signal vector to a given range [new_min, new_max]
+/// @param new_min Minimum value of the new range
+/// @param new_max Maximum value of the new range
+void SignalProcessing::ScaleVector(double new_min, double new_max)
+{
+    if (this->index == 0)
+        return;
+    double min_val = this->SignalVector[0];
+    double max_val = this->SignalVector[0];
+    for (int i = 1; i < this->index; ++i)
+    {
+        if (this->SignalVector[i] < min_val) min_val = this->SignalVector[i];
+        if (this->SignalVector[i] > max_val) max_val = this->SignalVector[i];
+    }
+    double range = max_val - min_val;
+    if (range == 0.0) return;
+    for (int i = 0; i < this->index; ++i)
+    {
+        this->SignalVector[i] = new_min + ((this->SignalVector[i] - min_val) / range) * (new_max - new_min);
+    }
+}
+
+/// @brief Applies exponential smoothing to the signal vector
+/// @param alpha Smoothing factor (0 < alpha <= 1)
+/// @param out_vector Destination vector for smoothed values (size >= GetIndex())
+void SignalProcessing::ExponentialSmoothing(double alpha, double *out_vector)
+{
+    if (out_vector == nullptr || this->index == 0 || alpha <= 0.0 || alpha > 1.0)
+        return;
+    out_vector[0] = this->SignalVector[0];
+    for (int i = 1; i < this->index; ++i)
+    {
+        out_vector[i] = alpha * this->SignalVector[i] + (1.0 - alpha) * out_vector[i - 1];
+    }
+}
+
 /// @fn CompareProbDistItem
 /// @brief Returns -1 if a<b ; 1 if a >b else returns 0
 /// @param const void *a

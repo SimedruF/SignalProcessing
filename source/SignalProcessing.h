@@ -37,9 +37,55 @@ typedef struct index_lookup_table
     int received;
     int normal;
 } index_lookup_table;
-class SignalProcessing
-{
+
+class SignalProcessing{
 public:
+    /**
+     * @brief Applies exponential smoothing to the signal vector
+     * @param alpha Smoothing factor (0 < alpha <= 1)
+     * @param out_vector Destination vector for smoothed values (size >= GetIndex())
+     */
+    void ExponentialSmoothing(double alpha, double *out_vector);
+
+    /**
+     * @brief Normalizes the signal vector to [0, 1] range
+     */
+    void NormalizeVector();
+    /**
+     * @brief Scales the signal vector to a given range [new_min, new_max]
+     * @param new_min Minimum value of the new range
+     * @param new_max Maximum value of the new range
+     */
+    void ScaleVector(double new_min, double new_max);
+    /**
+     * @brief Calculates the mean (average) of the signal vector
+     * @return Mean value
+     */
+    double GetMean();
+    /**
+     * @brief Calculates the variance of the signal vector
+     * @return Variance value
+     */
+    double GetVariance();
+    /**
+     * @brief Calculates the standard deviation of the signal vector
+     * @return Standard deviation value
+     */
+    double GetStandardDeviation();
+
+    /**
+     * @brief Calculates the moving average of the last window_size values
+     * @param window_size Number of values to average
+     * @return Moving average value
+     */
+    double GetMovingAverage(int window_size);
+    /**
+     * @brief Calculates the moving average for each position and stores it in out_vector
+     * @param out_vector Destination vector
+     * @param window_size Number of values to average
+     */
+    void GetMovingAverageVector(double *out_vector, int window_size);
+
     /**
      * @brief Constructor for SignalProcessing class
      */
