@@ -29,3 +29,17 @@ Tests are located in `test/test.cpp`. To run the tests:
 
 ## License
 This project is licensed under the MIT License. See the LICENSE file for details.
+
+## TODO
+Possible real-time signal processing operations to implement:
+- Filtering (low-pass, high-pass, band-pass, median, moving average)
+- Peak detection
+- Denoising (e.g., Kalman filter, wavelet)
+- Transforms (FFT, DCT, STFT for spectral analysis)
+- Normalization and scaling
+- Statistical calculations (mean, variance, standard deviation, skewness, kurtosis)
+- Event detection (thresholding, zero-crossing)
+- Smoothing (exponential, Savitzky-Golay)
+- Decimation and interpolation
+- Autocorrelation and cross-correlation analysis
+- Trend or anomaly detection
