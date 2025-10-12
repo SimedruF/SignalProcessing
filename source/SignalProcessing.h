@@ -97,6 +97,13 @@ public:
      */
     int AddValue(double value);
     /**
+     * @brief Adds a value with timestamp to the signal vector
+     * @param value Value to add
+     * @param ts Timestamp to associate with the value
+     * @return Current index
+     */
+    int AddValueWithTimestamp(double value, struct timespec ts);
+    /**
      * @brief Sets the item identifier
      * @param Item Item value
      */
@@ -224,6 +231,91 @@ public:
      * @return Normalized index
      */
     int  GetIndexLookupTable(int ReceivedIndex);
+    /**
+     * @brief Detects threshold crossing events in the signal vector
+     * @param threshold The threshold value to detect
+     * @param direction 1 for rising edge (below->above), -1 for falling edge (above->below), 0 for both
+     * @param events Output array to store indices where crossings occur (size >= GetIndex())
+     * @return Number of threshold crossings detected
+     */
+    int DetectThresholdCrossing(double threshold, int direction, int *events);
+    /**
+     * @brief Detects zero-crossing events in the signal vector
+     * @param direction 1 for positive crossing (negative->positive), -1 for negative crossing (positive->negative), 0 for both
+     * @param events Output array to store indices where crossings occur (size >= GetIndex())
+     * @return Number of zero crossings detected
+     */
+    int DetectZeroCrossing(int direction, int *events);
+    /**
+     * @brief Gets the threshold crossing flag status
+     * @return True if threshold crossing was detected
+     */
+    bool GetThresholdCrossingFlag();
+    /**
+     * @brief Gets the zero crossing flag status
+     * @return True if zero crossing was detected
+     */
+    bool GetZeroCrossingFlag();
+    /**
+     * @brief Clears event detection flags
+     */
+    void ClearEventFlags();
+
+    /**
+     * @brief Detects peaks (local maxima) in the signal vector
+     * @param peaks Output array to store peak indices
+     * @param max_peaks Maximum number of peaks to detect
+     * @return Number of peaks detected
+     */
+    int DetectPeaks(int *peaks, int max_peaks);
+    
+    /**
+     * @brief Detects peaks above a threshold value
+     * @param threshold Minimum value for peak detection
+     * @param peaks Output array to store peak indices
+     * @param max_peaks Maximum number of peaks to detect
+     * @return Number of peaks detected
+     */
+    int DetectPeaksWithThreshold(double threshold, int *peaks, int max_peaks);
+    
+    /**
+     * @brief Detects peaks with minimum prominence
+     * @param min_prominence Minimum prominence (height above surrounding valleys)
+     * @param peaks Output array to store peak indices
+     * @param max_peaks Maximum number of peaks to detect
+     * @return Number of peaks detected
+     */
+    int DetectPeaksWithProminence(double min_prominence, int *peaks, int max_peaks);
+    
+    /**
+     * @brief Detects peaks with minimum distance between them
+     * @param min_distance Minimum distance between consecutive peaks
+     * @param peaks Output array to store peak indices
+     * @param max_peaks Maximum number of peaks to detect
+     * @return Number of peaks detected
+     */
+    int DetectPeaksWithDistance(int min_distance, int *peaks, int max_peaks);
+    
+    /**
+     * @brief Gets the value at a specific peak index
+     * @param peak_index Index of the peak in the signal vector
+     * @return Value at the peak
+     */
+    double GetPeakValue(int peak_index);
+
+    /**
+     * @brief Gets the signal value at a specific index
+     * @param index Index in the signal vector
+     * @return Value at the specified index
+     */
+    double GetValue(int index);
+    
+    /**
+     * @brief Gets the timestamp at a specific index
+     * @param index Index in the signal vector
+     * @return Timestamp at the specified index
+     */
+    struct timespec GetTimestamp(int index);
 
 private:
         int IndexOf(double value, prob_dist *pd);
@@ -240,6 +332,8 @@ private:
         int index;
         timespec timestamp;
         prob_dist *p_d;
+        bool threshold_crossing_flag;
+        bool zero_crossing_flag;
     };
 
 #endif // SIGNALPROCESSING_H

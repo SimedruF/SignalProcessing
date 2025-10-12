@@ -24,6 +24,8 @@ SignalProcessing::SignalProcessing()
 	this->item = 0;
 	this->index = 0;
 	this->p_d = this->NormalDistributionCreate();
+	this->threshold_crossing_flag = false;
+	this->zero_crossing_flag = false;
 }
 /// @brief Clears the signal processing vector
 void SignalProcessing::ClearVector()
@@ -53,6 +55,28 @@ int SignalProcessing::AddValue(double value)
 	if ((this->index >= NB_MAX_VALUES) || (this->index < 0))
 	{
 		this->index = 0/*  */;
+	}	
+	else
+	{
+		this->index++;
+	}
+
+	return (this->index);
+}
+
+/// @brief Adds a value with timestamp to the signal vector
+/// @param value Value to be saved in the signal processing vector
+/// @param ts Timestamp to associate with the value
+/// @return this->index
+int SignalProcessing::AddValueWithTimestamp(double value, struct timespec ts)
+{
+	this->SignalVector[this->index] = value;
+	this->signal_timestamp[this->index].tv_sec = ts.tv_sec;
+	this->signal_timestamp[this->index].tv_nsec = ts.tv_nsec;
+	
+	if ((this->index >= NB_MAX_VALUES) || (this->index < 0))
+	{
+		this->index = 0;
 	}	
 	else
 	{
@@ -552,6 +576,82 @@ void SignalProcessing::ExponentialSmoothing(double alpha, double *out_vector)
     }
 }
 
+/// @brief Detects threshold crossing events in the signal vector
+/// @param threshold The threshold value to detect
+/// @param direction 1 for rising edge (below->above), -1 for falling edge (above->below), 0 for both
+/// @param events Output array to store indices where crossings occur (size >= GetIndex())
+/// @return Number of threshold crossings detected
+int SignalProcessing::DetectThresholdCrossing(double threshold, int direction, int *events)
+{
+    if (events == nullptr || this->index < 2)
+        return 0;
+    
+    int event_count = 0;
+    this->threshold_crossing_flag = false;
+    
+    for (int i = 1; i < this->index; ++i)
+    {
+        bool rising = (this->SignalVector[i - 1] < threshold) && (this->SignalVector[i] >= threshold);
+        bool falling = (this->SignalVector[i - 1] > threshold) && (this->SignalVector[i] <= threshold);
+        
+        if ((direction == 1 && rising) || (direction == -1 && falling) || (direction == 0 && (rising || falling)))
+        {
+            events[event_count++] = i;
+            this->threshold_crossing_flag = true;
+        }
+    }
+    
+    return event_count;
+}
+
+/// @brief Detects zero-crossing events in the signal vector
+/// @param direction 1 for positive crossing (negative->positive), -1 for negative crossing (positive->negative), 0 for both
+/// @param events Output array to store indices where crossings occur (size >= GetIndex())
+/// @return Number of zero crossings detected
+int SignalProcessing::DetectZeroCrossing(int direction, int *events)
+{
+    if (events == nullptr || this->index < 2)
+        return 0;
+    
+    int event_count = 0;
+    this->zero_crossing_flag = false;
+    
+    for (int i = 1; i < this->index; ++i)
+    {
+        bool positive_crossing = (this->SignalVector[i - 1] < 0.0) && (this->SignalVector[i] >= 0.0);
+        bool negative_crossing = (this->SignalVector[i - 1] > 0.0) && (this->SignalVector[i] <= 0.0);
+        
+        if ((direction == 1 && positive_crossing) || (direction == -1 && negative_crossing) || (direction == 0 && (positive_crossing || negative_crossing)))
+        {
+            events[event_count++] = i;
+            this->zero_crossing_flag = true;
+        }
+    }
+    
+    return event_count;
+}
+
+/// @brief Gets the threshold crossing flag status
+/// @return True if threshold crossing was detected
+bool SignalProcessing::GetThresholdCrossingFlag()
+{
+    return this->threshold_crossing_flag;
+}
+
+/// @brief Gets the zero crossing flag status
+/// @return True if zero crossing was detected
+bool SignalProcessing::GetZeroCrossingFlag()
+{
+    return this->zero_crossing_flag;
+}
+
+/// @brief Clears event detection flags
+void SignalProcessing::ClearEventFlags()
+{
+    this->threshold_crossing_flag = false;
+    this->zero_crossing_flag = false;
+}
+
 /// @fn CompareProbDistItem
 /// @brief Returns -1 if a<b ; 1 if a >b else returns 0
 /// @param const void *a
@@ -565,5 +665,246 @@ int CompareProbDistItem(const void *a, const void *b)
 		return 1;
 	else
 		return 0;
+}
+
+/// @brief Detects peaks (local maxima) in the signal vector
+/// @param peaks Output array to store peak indices
+/// @param max_peaks Maximum number of peaks to detect
+/// @return Number of peaks detected
+int SignalProcessing::DetectPeaks(int *peaks, int max_peaks)
+{
+    if (peaks == nullptr || max_peaks <= 0 || this->index < 3)
+        return 0;
+    
+    int peak_count = 0;
+    
+    // Check each point (excluding first and last)
+    for (int i = 1; i < this->index - 1 && peak_count < max_peaks; ++i)
+    {
+        // A peak is a point higher than both neighbors
+        if (this->SignalVector[i] > this->SignalVector[i - 1] && 
+            this->SignalVector[i] > this->SignalVector[i + 1])
+        {
+            peaks[peak_count++] = i;
+        }
+    }
+    
+    return peak_count;
+}
+
+/// @brief Detects peaks above a threshold value
+/// @param threshold Minimum value for peak detection
+/// @param peaks Output array to store peak indices
+/// @param max_peaks Maximum number of peaks to detect
+/// @return Number of peaks detected
+int SignalProcessing::DetectPeaksWithThreshold(double threshold, int *peaks, int max_peaks)
+{
+    if (peaks == nullptr || max_peaks <= 0 || this->index < 3)
+        return 0;
+    
+    int peak_count = 0;
+    
+    // Check each point (excluding first and last)
+    for (int i = 1; i < this->index - 1 && peak_count < max_peaks; ++i)
+    {
+        // A peak must be higher than both neighbors AND above threshold
+        if (this->SignalVector[i] > this->SignalVector[i - 1] && 
+            this->SignalVector[i] > this->SignalVector[i + 1] &&
+            this->SignalVector[i] >= threshold)
+        {
+            peaks[peak_count++] = i;
+        }
+    }
+    
+    return peak_count;
+}
+
+/// @brief Detects peaks with minimum prominence
+/// @param min_prominence Minimum prominence (height above surrounding valleys)
+/// @param peaks Output array to store peak indices
+/// @param max_peaks Maximum number of peaks to detect
+/// @return Number of peaks detected
+int SignalProcessing::DetectPeaksWithProminence(double min_prominence, int *peaks, int max_peaks)
+{
+    if (peaks == nullptr || max_peaks <= 0 || this->index < 3 || min_prominence < 0)
+        return 0;
+    
+    int peak_count = 0;
+    
+    // First detect all local maxima
+    for (int i = 1; i < this->index - 1 && peak_count < max_peaks; ++i)
+    {
+        if (this->SignalVector[i] > this->SignalVector[i - 1] && 
+            this->SignalVector[i] > this->SignalVector[i + 1])
+        {
+            // Calculate prominence: find minimum on both sides
+            double left_min = this->SignalVector[i];
+            double right_min = this->SignalVector[i];
+            
+            // Search left for minimum
+            for (int j = i - 1; j >= 0; --j)
+            {
+                if (this->SignalVector[j] < left_min)
+                    left_min = this->SignalVector[j];
+                // Stop at higher peak
+                if (this->SignalVector[j] > this->SignalVector[i])
+                    break;
+            }
+            
+            // Search right for minimum
+            for (int j = i + 1; j < this->index; ++j)
+            {
+                if (this->SignalVector[j] < right_min)
+                    right_min = this->SignalVector[j];
+                // Stop at higher peak
+                if (this->SignalVector[j] > this->SignalVector[i])
+                    break;
+            }
+            
+            // Prominence is the minimum of the two side differences
+            double left_prominence = this->SignalVector[i] - left_min;
+            double right_prominence = this->SignalVector[i] - right_min;
+            double prominence = (left_prominence < right_prominence) ? left_prominence : right_prominence;
+            
+            if (prominence >= min_prominence)
+            {
+                peaks[peak_count++] = i;
+            }
+        }
+    }
+    
+    return peak_count;
+}
+
+/// @brief Detects peaks with minimum distance between them
+/// @param min_distance Minimum distance between consecutive peaks
+/// @param peaks Output array to store peak indices
+/// @param max_peaks Maximum number of peaks to detect
+/// @return Number of peaks detected
+int SignalProcessing::DetectPeaksWithDistance(int min_distance, int *peaks, int max_peaks)
+{
+    if (peaks == nullptr || max_peaks <= 0 || this->index < 3 || min_distance < 1)
+        return 0;
+    
+    // First detect all local maxima with their values
+    int temp_peaks[NB_MAX_VALUES];
+    double peak_values[NB_MAX_VALUES];
+    int temp_count = 0;
+    
+    for (int i = 1; i < this->index - 1; ++i)
+    {
+        if (this->SignalVector[i] > this->SignalVector[i - 1] && 
+            this->SignalVector[i] > this->SignalVector[i + 1])
+        {
+            temp_peaks[temp_count] = i;
+            peak_values[temp_count] = this->SignalVector[i];
+            temp_count++;
+        }
+    }
+    
+    if (temp_count == 0)
+        return 0;
+    
+    // Sort peaks by value (descending) to prioritize higher peaks
+    // Simple bubble sort for this implementation
+    for (int i = 0; i < temp_count - 1; ++i)
+    {
+        for (int j = 0; j < temp_count - i - 1; ++j)
+        {
+            if (peak_values[j] < peak_values[j + 1])
+            {
+                // Swap values
+                double temp_val = peak_values[j];
+                peak_values[j] = peak_values[j + 1];
+                peak_values[j + 1] = temp_val;
+                // Swap indices
+                int temp_idx = temp_peaks[j];
+                temp_peaks[j] = temp_peaks[j + 1];
+                temp_peaks[j + 1] = temp_idx;
+            }
+        }
+    }
+    
+    // Select peaks respecting minimum distance
+    bool selected[NB_MAX_VALUES] = {false};
+    int peak_count = 0;
+    
+    for (int i = 0; i < temp_count && peak_count < max_peaks; ++i)
+    {
+        bool too_close = false;
+        
+        // Check distance to all already selected peaks
+        for (int j = 0; j < temp_count; ++j)
+        {
+            if (selected[j])
+            {
+                int distance = temp_peaks[i] - temp_peaks[j];
+                if (distance < 0) distance = -distance; // abs()
+                
+                if (distance < min_distance)
+                {
+                    too_close = true;
+                    break;
+                }
+            }
+        }
+        
+        if (!too_close)
+        {
+            selected[i] = true;
+            peaks[peak_count++] = temp_peaks[i];
+        }
+    }
+    
+    // Sort final peaks by index for easier interpretation
+    for (int i = 0; i < peak_count - 1; ++i)
+    {
+        for (int j = 0; j < peak_count - i - 1; ++j)
+        {
+            if (peaks[j] > peaks[j + 1])
+            {
+                int temp = peaks[j];
+                peaks[j] = peaks[j + 1];
+                peaks[j + 1] = temp;
+            }
+        }
+    }
+    
+    return peak_count;
+}
+
+/// @brief Gets the value at a specific peak index
+/// @param peak_index Index of the peak in the signal vector
+/// @return Value at the peak
+double SignalProcessing::GetPeakValue(int peak_index)
+{
+    if (peak_index < 0 || peak_index >= this->index)
+        return 0.0;
+    
+    return this->SignalVector[peak_index];
+}
+
+/// @brief Gets the signal value at a specific index
+/// @param index Index in the signal vector
+/// @return Value at the specified index
+double SignalProcessing::GetValue(int index)
+{
+    if (index < 0 || index >= this->index)
+        return 0.0;
+    
+    return this->SignalVector[index];
+}
+
+/// @brief Gets the timestamp at a specific index
+/// @param index Index in the signal vector
+/// @return Timestamp at the specified index
+struct timespec SignalProcessing::GetTimestamp(int index)
+{
+    struct timespec empty_ts = {0, 0};
+    
+    if (index < 0 || index >= this->index)
+        return empty_ts;
+    
+    return this->signal_timestamp[index];
 }
 
