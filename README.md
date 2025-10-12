@@ -52,6 +52,30 @@ To run a test:
 ./test_peak_detection
 ```
 
+### Run All Tests Automatically:
+For comprehensive testing after code modifications:
+
+```bash
+cd test
+chmod +x run_all_tests.sh
+./run_all_tests.sh
+```
+
+This will:
+- Compile all tests
+- Execute each test
+- Generate detailed report with success rates
+- Create log files for debugging
+
+For quick validation:
+```bash
+cd test
+chmod +x quick_test.sh
+./quick_test.sh
+```
+
+See `test/TEST_SUITE_README.md` for detailed testing documentation.
+
 ## Examples
 A complete working example demonstrating all features is available in the `examples/` folder:
 
