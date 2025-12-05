@@ -908,3 +908,263 @@ struct timespec SignalProcessing::GetTimestamp(int index)
     return this->signal_timestamp[index];
 }
 
+/// @brief Applies a simple 1D Kalman filter for signal denoising
+/// @param process_noise Process noise covariance (Q)
+/// @param measurement_noise Measurement noise covariance (R)
+/// @param out_vector Output vector for filtered values
+/// @param initial_estimate Initial state estimate
+/// @param initial_error Initial error covariance
+void SignalProcessing::KalmanFilter(double process_noise, double measurement_noise, 
+                                   double *out_vector, double initial_estimate, double initial_error)
+{
+    if (out_vector == nullptr || this->index == 0)
+        return;
+    
+    // Kalman filter state variables
+    double estimate = initial_estimate;
+    double error_covariance = initial_error;
+    
+    for (int i = 0; i < this->index; ++i)
+    {
+        // Prediction step
+        double predicted_estimate = estimate;
+        double predicted_error = error_covariance + process_noise;
+        
+        // Update step
+        double kalman_gain = predicted_error / (predicted_error + measurement_noise);
+        estimate = predicted_estimate + kalman_gain * (this->SignalVector[i] - predicted_estimate);
+        error_covariance = (1.0 - kalman_gain) * predicted_error;
+        
+        out_vector[i] = estimate;
+    }
+}
+
+/// @brief Soft thresholding function for wavelet denoising
+/// @param value Input value
+/// @param threshold Threshold value
+/// @return Thresholded value
+double SignalProcessing::SoftThreshold(double value, double threshold)
+{
+    if (value > threshold)
+        return value - threshold;
+    else if (value < -threshold)
+        return value + threshold;
+    else
+        return 0.0;
+}
+
+/// @brief Partition function for quicksort
+/// @param arr Array to partition
+/// @param low Starting index
+/// @param high Ending index
+/// @return Partition index
+int SignalProcessing::PartitionDouble(double *arr, int low, int high)
+{
+    double pivot = arr[high];
+    int i = low - 1;
+    
+    for (int j = low; j < high; ++j)
+    {
+        if (arr[j] <= pivot)
+        {
+            i++;
+            double temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+        }
+    }
+    
+    double temp = arr[i + 1];
+    arr[i + 1] = arr[high];
+    arr[high] = temp;
+    
+    return i + 1;
+}
+
+/// @brief Quicksort implementation for doubles
+/// @param arr Array to sort
+/// @param low Starting index
+/// @param high Ending index
+void SignalProcessing::QuickSortDouble(double *arr, int low, int high)
+{
+    if (low < high)
+    {
+        int pi = PartitionDouble(arr, low, high);
+        QuickSortDouble(arr, low, pi - 1);
+        QuickSortDouble(arr, pi + 1, high);
+    }
+}
+
+/// @brief Haar wavelet transform (1D)
+/// @param data Data array
+/// @param size Size of data (must be power of 2)
+/// @param direction 1 for forward, -1 for inverse
+void SignalProcessing::HaarWaveletTransform(double *data, int size, int direction)
+{
+    if (data == nullptr || size < 2)
+        return;
+    
+    double temp[NB_MAX_VALUES];
+    
+    if (direction == 1) // Forward transform
+    {
+        int half = size / 2;
+        for (int i = 0; i < half; ++i)
+        {
+            temp[i] = (data[2 * i] + data[2 * i + 1]) / 1.414213562373095; // sqrt(2)
+            temp[half + i] = (data[2 * i] - data[2 * i + 1]) / 1.414213562373095;
+        }
+        for (int i = 0; i < size; ++i)
+            data[i] = temp[i];
+    }
+    else // Inverse transform
+    {
+        int half = size / 2;
+        for (int i = 0; i < half; ++i)
+        {
+            temp[2 * i] = (data[i] + data[half + i]) / 1.414213562373095;
+            temp[2 * i + 1] = (data[i] - data[half + i]) / 1.414213562373095;
+        }
+        for (int i = 0; i < size; ++i)
+            data[i] = temp[i];
+    }
+}
+
+/// @brief Applies wavelet denoising using soft thresholding
+/// @param threshold Threshold value for wavelet coefficients
+/// @param out_vector Output vector for denoised values
+/// @param level Decomposition level
+void SignalProcessing::WaveletDenoise(double threshold, double *out_vector, int level)
+{
+    if (out_vector == nullptr || this->index == 0)
+        return;
+    
+    // Copy signal to output
+    for (int i = 0; i < this->index; ++i)
+        out_vector[i] = this->SignalVector[i];
+    
+    // Find nearest power of 2
+    int size = this->index;
+    int transform_size = 1;
+    while (transform_size < size)
+        transform_size *= 2;
+    
+    // Pad with zeros if needed
+    for (int i = size; i < transform_size; ++i)
+        out_vector[i] = 0.0;
+    
+    // Apply forward wavelet transform multiple times
+    int current_size = transform_size;
+    for (int l = 0; l < level && current_size >= 2; ++l)
+    {
+        HaarWaveletTransform(out_vector, current_size, 1);
+        current_size /= 2;
+    }
+    
+    // Apply soft thresholding to detail coefficients
+    // Keep approximation coefficients (first current_size elements) untouched
+    for (int i = current_size; i < transform_size; ++i)
+    {
+        out_vector[i] = SoftThreshold(out_vector[i], threshold);
+    }
+    
+    // Apply inverse wavelet transform
+    current_size *= 2;
+    for (int l = 0; l < level && current_size <= transform_size; ++l)
+    {
+        HaarWaveletTransform(out_vector, current_size, -1);
+        current_size *= 2;
+    }
+    
+    // Trim to original size
+    for (int i = size; i < transform_size; ++i)
+        out_vector[i] = 0.0;
+}
+
+/// @brief Applies median filter for noise removal
+/// @param window_size Window size (must be odd)
+/// @param out_vector Output vector for filtered values
+void SignalProcessing::MedianFilter(int window_size, double *out_vector)
+{
+    if (out_vector == nullptr || this->index == 0 || window_size < 1)
+        return;
+    
+    // Ensure odd window size
+    if (window_size % 2 == 0)
+        window_size++;
+    
+    int half_window = window_size / 2;
+    double window[101]; // Support up to window size 101
+    
+    if (window_size > 101)
+        window_size = 101;
+    
+    for (int i = 0; i < this->index; ++i)
+    {
+        int count = 0;
+        
+        // Collect values in window
+        for (int j = -half_window; j <= half_window; ++j)
+        {
+            int idx = i + j;
+            if (idx >= 0 && idx < this->index)
+            {
+                window[count++] = this->SignalVector[idx];
+            }
+        }
+        
+        // Sort window to find median
+        if (count > 0)
+        {
+            QuickSortDouble(window, 0, count - 1);
+            
+            // Get median
+            if (count % 2 == 1)
+                out_vector[i] = window[count / 2];
+            else
+                out_vector[i] = (window[count / 2 - 1] + window[count / 2]) / 2.0;
+        }
+        else
+        {
+            out_vector[i] = this->SignalVector[i];
+        }
+    }
+}
+
+/// @brief Estimates noise level using Median Absolute Deviation (MAD)
+/// @return Estimated noise standard deviation
+double SignalProcessing::EstimateNoiseLevel()
+{
+    if (this->index < 2)
+        return 0.0;
+    
+    // Calculate differences (high-pass filter approximation)
+    double differences[NB_MAX_VALUES];
+    for (int i = 0; i < this->index - 1; ++i)
+    {
+        differences[i] = this->SignalVector[i + 1] - this->SignalVector[i];
+    }
+    int diff_size = this->index - 1;
+    
+    // Calculate absolute values
+    for (int i = 0; i < diff_size; ++i)
+    {
+        if (differences[i] < 0)
+            differences[i] = -differences[i];
+    }
+    
+    // Sort to find median
+    QuickSortDouble(differences, 0, diff_size - 1);
+    
+    // Get median
+    double median;
+    if (diff_size % 2 == 1)
+        median = differences[diff_size / 2];
+    else
+        median = (differences[diff_size / 2 - 1] + differences[diff_size / 2]) / 2.0;
+    
+    // Estimate noise sigma using MAD
+    // sigma ≈ MAD / 0.6745
+    return median / 0.6745;
+}
+

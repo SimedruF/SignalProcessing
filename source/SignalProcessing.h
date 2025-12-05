@@ -317,8 +317,44 @@ public:
      */
     struct timespec GetTimestamp(int index);
 
+    /**
+     * @brief Applies a simple 1D Kalman filter for signal denoising
+     * @param process_noise Process noise covariance (Q)
+     * @param measurement_noise Measurement noise covariance (R)
+     * @param out_vector Output vector for filtered values (size >= GetIndex())
+     * @param initial_estimate Initial state estimate (use 0 if unknown)
+     * @param initial_error Initial error covariance (use 1.0 if unknown)
+     */
+    void KalmanFilter(double process_noise, double measurement_noise, double *out_vector, 
+                      double initial_estimate = 0.0, double initial_error = 1.0);
+    
+    /**
+     * @brief Applies wavelet denoising using soft thresholding
+     * @param threshold Threshold value for wavelet coefficients
+     * @param out_vector Output vector for denoised values (size >= GetIndex())
+     * @param level Decomposition level (1-3, default 1)
+     */
+    void WaveletDenoise(double threshold, double *out_vector, int level = 1);
+    
+    /**
+     * @brief Applies median filter for noise removal
+     * @param window_size Window size (must be odd number, e.g., 3, 5, 7)
+     * @param out_vector Output vector for filtered values (size >= GetIndex())
+     */
+    void MedianFilter(int window_size, double *out_vector);
+    
+    /**
+     * @brief Estimates noise level using Median Absolute Deviation (MAD)
+     * @return Estimated noise standard deviation
+     */
+    double EstimateNoiseLevel();
+
 private:
         int IndexOf(double value, prob_dist *pd);
+        void HaarWaveletTransform(double *data, int size, int direction);
+        double SoftThreshold(double value, double threshold);
+        void QuickSortDouble(double *arr, int low, int high);
+        int PartitionDouble(double *arr, int low, int high);
         /**
          * @brief Signal vector
          */
