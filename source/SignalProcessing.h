@@ -38,6 +38,49 @@ typedef struct index_lookup_table
     int normal;
 } index_lookup_table;
 
+// --------------------------------------------------------
+// STRUCT SegmentStats - Statistics for signal segments
+// --------------------------------------------------------
+typedef struct SegmentStats
+{
+    int start_index;        // Starting index of segment
+    int end_index;          // Ending index of segment
+    int segment_id;         // Segment identifier (e.g., blade number)
+    double mean;            // Mean value in segment
+    double std_dev;         // Standard deviation in segment
+    double max_value;       // Maximum value in segment
+    double min_value;       // Minimum value in segment
+    double rms;             // Root mean square
+    double peak_to_peak;    // Peak-to-peak amplitude
+    double anomaly_score;   // Computed anomaly score
+    int num_points;         // Number of data points in segment
+} SegmentStats;
+
+// --------------------------------------------------------
+// STRUCT FrequencyBin - Frequency analysis result
+// --------------------------------------------------------
+typedef struct FrequencyBin
+{
+    double frequency;       // Frequency in Hz
+    double magnitude;       // Magnitude of this frequency component
+    double phase;           // Phase in radians
+    double power;          // Power (magnitude squared)
+} FrequencyBin;
+
+// --------------------------------------------------------
+// STRUCT FrequencySpectrum - Complete frequency analysis
+// --------------------------------------------------------
+typedef struct FrequencySpectrum
+{
+    FrequencyBin *bins;     // Array of frequency bins
+    int num_bins;           // Number of frequency bins
+    double sampling_rate;   // Sampling rate in Hz
+    double frequency_resolution; // Frequency resolution (bin width)
+    double dominant_frequency;   // Frequency with highest magnitude
+    double total_power;     // Total signal power
+    int window_size;        // Size of analyzed window
+} FrequencySpectrum;
+
 class SignalProcessing{
 public:
     /**
@@ -349,12 +392,169 @@ public:
      */
     double EstimateNoiseLevel();
 
+    // ========== ANOMALY DETECTION ==========
+    
+    /**
+     * @brief Detects anomalies using statistical threshold (Z-score method)
+     * @param threshold_sigma Number of standard deviations for anomaly threshold (e.g., 3.0)
+     * @param anomaly_indices Output array to store indices of detected anomalies
+     * @param max_anomalies Maximum number of anomalies to detect
+     * @return Number of anomalies detected
+     */
+    int DetectAnomaliesZScore(double threshold_sigma, int *anomaly_indices, int max_anomalies);
+    
+    /**
+     * @brief Detects anomalies using Interquartile Range (IQR) method
+     * @param iqr_multiplier Multiplier for IQR (typically 1.5 for outliers, 3.0 for extreme outliers)
+     * @param anomaly_indices Output array to store indices of detected anomalies
+     * @param max_anomalies Maximum number of anomalies to detect
+     * @return Number of anomalies detected
+     */
+    int DetectAnomaliesIQR(double iqr_multiplier, int *anomaly_indices, int max_anomalies);
+    
+    /**
+     * @brief Detects anomalies using Moving Average Deviation method
+     * @param window_size Window size for moving average
+     * @param threshold_factor Multiplication factor for deviation threshold
+     * @param anomaly_indices Output array to store indices of detected anomalies
+     * @param max_anomalies Maximum number of anomalies to detect
+     * @return Number of anomalies detected
+     */
+    int DetectAnomaliesMAD(int window_size, double threshold_factor, int *anomaly_indices, int max_anomalies);
+    
+    /**
+     * @brief Detects sudden spikes/changes in signal (rate of change anomaly)
+     * @param threshold_change Minimum rate of change to be considered anomalous
+     * @param anomaly_indices Output array to store indices of detected anomalies
+     * @param max_anomalies Maximum number of anomalies to detect
+     * @return Number of anomalies detected
+     */
+    int DetectSuddenChanges(double threshold_change, int *anomaly_indices, int max_anomalies);
+    
+    /**
+     * @brief Segments signal by markers/tags (e.g., turbine blades)
+     * @param marker_indices Array of indices where each segment starts (e.g., blade positions)
+     * @param num_markers Number of markers
+     * @param segment_stats Output array to store statistics for each segment
+     * @return Number of segments analyzed
+     */
+    int SegmentByMarkers(int *marker_indices, int num_markers, SegmentStats *segment_stats);
+    
+    /**
+     * @brief Identifies the segment (e.g., blade) with highest anomaly score
+     * @param marker_indices Array of indices where each segment starts
+     * @param num_markers Number of markers
+     * @param anomaly_method Method to use: 0=ZScore, 1=IQR, 2=MAD, 3=MaxValue
+     * @return Index of the most anomalous segment (0-based segment number)
+     */
+    int FindMostAnomalousSegment(int *marker_indices, int num_markers, int anomaly_method);
+    
+    /**
+     * @brief Detects anomalies in periodic signals (turbine rotations)
+     * @param period Expected period length
+     * @param tolerance Tolerance for period variations (percentage, e.g., 0.1 for 10%)
+     * @param anomaly_indices Output array to store indices of detected anomalies
+     * @param max_anomalies Maximum number of anomalies to detect
+     * @return Number of anomalies detected
+     */
+    int DetectPeriodicAnomalies(int period, double tolerance, int *anomaly_indices, int max_anomalies);
+    
+    /**
+     * @brief Calculates anomaly score for entire signal
+     * @param method Method to use: 0=ZScore, 1=IQR, 2=MaxDeviation
+     * @return Anomaly score (higher = more anomalous)
+     */
+    double CalculateAnomalyScore(int method);
+
+    // ========== FREQUENCY ANALYSIS ==========
+    
+    /**
+     * @brief Performs FFT on a window of the signal
+     * @param start_index Starting index of the window
+     * @param window_size Size of the window (will be rounded to nearest power of 2)
+     * @param sampling_rate Sampling rate in Hz
+     * @param spectrum Output structure containing frequency analysis
+     * @return true if successful, false otherwise
+     */
+    bool FFTAnalysis(int start_index, int window_size, double sampling_rate, FrequencySpectrum *spectrum);
+    
+    /**
+     * @brief Performs FFT on entire signal
+     * @param sampling_rate Sampling rate in Hz
+     * @param spectrum Output structure containing frequency analysis
+     * @return true if successful, false otherwise
+     */
+    bool FFTAnalysis(double sampling_rate, FrequencySpectrum *spectrum);
+    
+    /**
+     * @brief Finds peaks in frequency spectrum
+     * @param spectrum Frequency spectrum to analyze
+     * @param min_magnitude Minimum magnitude to be considered a peak
+     * @param peak_frequencies Output array for peak frequencies
+     * @param peak_magnitudes Output array for peak magnitudes
+     * @param max_peaks Maximum number of peaks to find
+     * @return Number of peaks found
+     */
+    int FindFrequencyPeaks(FrequencySpectrum *spectrum, double min_magnitude, 
+                          double *peak_frequencies, double *peak_magnitudes, int max_peaks);
+    
+    /**
+     * @brief Calculates power in a frequency band
+     * @param spectrum Frequency spectrum to analyze
+     * @param freq_low Lower frequency bound (Hz)
+     * @param freq_high Upper frequency bound (Hz)
+     * @return Total power in the frequency band
+     */
+    double GetPowerInBand(FrequencySpectrum *spectrum, double freq_low, double freq_high);
+    
+    /**
+     * @brief Analyzes harmonics of a fundamental frequency
+     * @param spectrum Frequency spectrum to analyze
+     * @param fundamental Fundamental frequency (Hz)
+     * @param num_harmonics Number of harmonics to analyze
+     * @param harmonic_magnitudes Output array for harmonic magnitudes
+     * @return Total harmonic distortion (THD)
+     */
+    double AnalyzeHarmonics(FrequencySpectrum *spectrum, double fundamental, 
+                           int num_harmonics, double *harmonic_magnitudes);
+    
+    /**
+     * @brief Compares frequency spectra of different segments
+     * @param marker_indices Array of segment start indices
+     * @param num_markers Number of segments
+     * @param sampling_rate Sampling rate in Hz
+     * @param spectra Output array of spectra for each segment
+     * @return Number of spectra computed
+     */
+    int CompareSegmentSpectra(int *marker_indices, int num_markers, 
+                             double sampling_rate, FrequencySpectrum *spectra);
+    
+    /**
+     * @brief Frees memory allocated for frequency spectrum
+     * @param spectrum Spectrum to free
+     */
+    void FreeSpectrum(FrequencySpectrum *spectrum);
+    
+    /**
+     * @brief Detects frequency anomalies by comparing with baseline spectrum
+     * @param current_spectrum Current frequency spectrum
+     * @param baseline_spectrum Baseline (normal) frequency spectrum
+     * @param threshold Threshold for anomaly detection (ratio)
+     * @return Anomaly score (0 = normal, higher = more anomalous)
+     */
+    double DetectFrequencyAnomalies(FrequencySpectrum *current_spectrum, 
+                                   FrequencySpectrum *baseline_spectrum, 
+                                   double threshold);
+
 private:
         int IndexOf(double value, prob_dist *pd);
         void HaarWaveletTransform(double *data, int size, int direction);
         double SoftThreshold(double value, double threshold);
         void QuickSortDouble(double *arr, int low, int high);
         int PartitionDouble(double *arr, int low, int high);
+        void FFT(double *real, double *imag, int size, int direction);
+        int NextPowerOfTwo(int n);
+        void ApplyWindow(double *data, int size, int window_type);
         /**
          * @brief Signal vector
          */

@@ -1168,3 +1168,871 @@ double SignalProcessing::EstimateNoiseLevel()
     return median / 0.6745;
 }
 
+// ========== ANOMALY DETECTION IMPLEMENTATION ==========
+
+/// @brief Detects anomalies using Z-score method (statistical threshold)
+/// @param threshold_sigma Number of standard deviations for anomaly threshold
+/// @param anomaly_indices Output array for anomaly indices
+/// @param max_anomalies Maximum number of anomalies to detect
+/// @return Number of anomalies detected
+int SignalProcessing::DetectAnomaliesZScore(double threshold_sigma, int *anomaly_indices, int max_anomalies)
+{
+    if (anomaly_indices == nullptr || this->index < 3 || max_anomalies <= 0)
+        return 0;
+    
+    double mean = GetMean();
+    double std_dev = GetStandardDeviation();
+    
+    if (std_dev == 0.0)
+        return 0;
+    
+    int anomaly_count = 0;
+    
+    for (int i = 0; i < this->index && anomaly_count < max_anomalies; ++i)
+    {
+        double z_score = (this->SignalVector[i] - mean) / std_dev;
+        
+        // Check if absolute z-score exceeds threshold
+        if (z_score > threshold_sigma || z_score < -threshold_sigma)
+        {
+            anomaly_indices[anomaly_count++] = i;
+        }
+    }
+    
+    return anomaly_count;
+}
+
+/// @brief Detects anomalies using Interquartile Range (IQR) method
+/// @param iqr_multiplier Multiplier for IQR (1.5 for outliers, 3.0 for extreme)
+/// @param anomaly_indices Output array for anomaly indices
+/// @param max_anomalies Maximum number of anomalies to detect
+/// @return Number of anomalies detected
+int SignalProcessing::DetectAnomaliesIQR(double iqr_multiplier, int *anomaly_indices, int max_anomalies)
+{
+    if (anomaly_indices == nullptr || this->index < 4 || max_anomalies <= 0)
+        return 0;
+    
+    // Copy and sort data to find quartiles
+    double sorted[NB_MAX_VALUES];
+    for (int i = 0; i < this->index; ++i)
+        sorted[i] = this->SignalVector[i];
+    
+    QuickSortDouble(sorted, 0, this->index - 1);
+    
+    // Calculate Q1, Q3
+    int q1_pos = this->index / 4;
+    int q3_pos = (3 * this->index) / 4;
+    
+    double q1 = sorted[q1_pos];
+    double q3 = sorted[q3_pos];
+    double iqr = q3 - q1;
+    
+    // Calculate bounds
+    double lower_bound = q1 - iqr_multiplier * iqr;
+    double upper_bound = q3 + iqr_multiplier * iqr;
+    
+    int anomaly_count = 0;
+    
+    for (int i = 0; i < this->index && anomaly_count < max_anomalies; ++i)
+    {
+        if (this->SignalVector[i] < lower_bound || this->SignalVector[i] > upper_bound)
+        {
+            anomaly_indices[anomaly_count++] = i;
+        }
+    }
+    
+    return anomaly_count;
+}
+
+/// @brief Detects anomalies using Moving Average Deviation method
+/// @param window_size Window size for moving average
+/// @param threshold_factor Multiplication factor for deviation threshold
+/// @param anomaly_indices Output array for anomaly indices
+/// @param max_anomalies Maximum number of anomalies to detect
+/// @return Number of anomalies detected
+int SignalProcessing::DetectAnomaliesMAD(int window_size, double threshold_factor, int *anomaly_indices, int max_anomalies)
+{
+    if (anomaly_indices == nullptr || this->index < window_size || max_anomalies <= 0)
+        return 0;
+    
+    int anomaly_count = 0;
+    
+    for (int i = window_size; i < this->index && anomaly_count < max_anomalies; ++i)
+    {
+        // Calculate moving average for window before current point
+        double sum = 0.0;
+        for (int j = i - window_size; j < i; ++j)
+            sum += this->SignalVector[j];
+        double moving_avg = sum / window_size;
+        
+        // Calculate standard deviation in window
+        double variance_sum = 0.0;
+        for (int j = i - window_size; j < i; ++j)
+        {
+            double diff = this->SignalVector[j] - moving_avg;
+            variance_sum += diff * diff;
+        }
+        double std_dev = sqrt(variance_sum / window_size);
+        
+        // Check if current point deviates significantly
+        double deviation = this->SignalVector[i] - moving_avg;
+        if (deviation < 0) deviation = -deviation;
+        
+        if (std_dev > 0 && deviation > threshold_factor * std_dev)
+        {
+            anomaly_indices[anomaly_count++] = i;
+        }
+    }
+    
+    return anomaly_count;
+}
+
+/// @brief Detects sudden changes/spikes in signal (rate of change anomaly)
+/// @param threshold_change Minimum rate of change to be considered anomalous
+/// @param anomaly_indices Output array for anomaly indices
+/// @param max_anomalies Maximum number of anomalies to detect
+/// @return Number of anomalies detected
+int SignalProcessing::DetectSuddenChanges(double threshold_change, int *anomaly_indices, int max_anomalies)
+{
+    if (anomaly_indices == nullptr || this->index < 2 || max_anomalies <= 0)
+        return 0;
+    
+    int anomaly_count = 0;
+    
+    for (int i = 1; i < this->index && anomaly_count < max_anomalies; ++i)
+    {
+        double change = this->SignalVector[i] - this->SignalVector[i - 1];
+        if (change < 0) change = -change;
+        
+        if (change >= threshold_change)
+        {
+            anomaly_indices[anomaly_count++] = i;
+        }
+    }
+    
+    return anomaly_count;
+}
+
+/// @brief Segments signal by markers and calculates statistics for each segment
+/// @param marker_indices Array of indices where each segment starts
+/// @param num_markers Number of markers
+/// @param segment_stats Output array for segment statistics
+/// @return Number of segments analyzed
+int SignalProcessing::SegmentByMarkers(int *marker_indices, int num_markers, SegmentStats *segment_stats)
+{
+    if (marker_indices == nullptr || segment_stats == nullptr || num_markers < 1)
+        return 0;
+    
+    int segment_count = 0;
+    
+    for (int seg = 0; seg < num_markers; ++seg)
+    {
+        int start = marker_indices[seg];
+        int end = (seg < num_markers - 1) ? marker_indices[seg + 1] - 1 : this->index - 1;
+        
+        if (start >= this->index || start < 0 || end >= this->index || start > end)
+            continue;
+        
+        // Calculate statistics for this segment
+        segment_stats[segment_count].start_index = start;
+        segment_stats[segment_count].end_index = end;
+        segment_stats[segment_count].segment_id = seg;
+        segment_stats[segment_count].num_points = end - start + 1;
+        
+        // Calculate mean
+        double sum = 0.0;
+        double max_val = this->SignalVector[start];
+        double min_val = this->SignalVector[start];
+        
+        for (int i = start; i <= end; ++i)
+        {
+            sum += this->SignalVector[i];
+            if (this->SignalVector[i] > max_val) max_val = this->SignalVector[i];
+            if (this->SignalVector[i] < min_val) min_val = this->SignalVector[i];
+        }
+        
+        segment_stats[segment_count].mean = sum / segment_stats[segment_count].num_points;
+        segment_stats[segment_count].max_value = max_val;
+        segment_stats[segment_count].min_value = min_val;
+        segment_stats[segment_count].peak_to_peak = max_val - min_val;
+        
+        // Calculate standard deviation and RMS
+        double variance_sum = 0.0;
+        double rms_sum = 0.0;
+        
+        for (int i = start; i <= end; ++i)
+        {
+            double diff = this->SignalVector[i] - segment_stats[segment_count].mean;
+            variance_sum += diff * diff;
+            rms_sum += this->SignalVector[i] * this->SignalVector[i];
+        }
+        
+        segment_stats[segment_count].std_dev = sqrt(variance_sum / segment_stats[segment_count].num_points);
+        segment_stats[segment_count].rms = sqrt(rms_sum / segment_stats[segment_count].num_points);
+        
+        // Initial anomaly score based on deviation from global mean
+        double global_mean = GetMean();
+        segment_stats[segment_count].anomaly_score = segment_stats[segment_count].mean - global_mean;
+        if (segment_stats[segment_count].anomaly_score < 0)
+            segment_stats[segment_count].anomaly_score = -segment_stats[segment_count].anomaly_score;
+        
+        segment_count++;
+    }
+    
+    return segment_count;
+}
+
+/// @brief Finds the segment with highest anomaly score
+/// @param marker_indices Array of indices where each segment starts
+/// @param num_markers Number of markers
+/// @param anomaly_method Method: 0=ZScore, 1=IQR, 2=MAD, 3=MaxValue
+/// @return Index of most anomalous segment
+int SignalProcessing::FindMostAnomalousSegment(int *marker_indices, int num_markers, int anomaly_method)
+{
+    if (marker_indices == nullptr || num_markers < 1)
+        return -1;
+    
+    SegmentStats segment_stats[100];
+    int num_segments = SegmentByMarkers(marker_indices, num_markers, segment_stats);
+    
+    if (num_segments == 0)
+        return -1;
+    
+    int most_anomalous = 0;
+    double max_score = 0.0;
+    
+    // Calculate global statistics for comparison
+    double global_mean = GetMean();
+    double global_std = GetStandardDeviation();
+    
+    for (int i = 0; i < num_segments; ++i)
+    {
+        double score = 0.0;
+        
+        switch (anomaly_method)
+        {
+            case 0: // Z-Score based on mean deviation
+                if (global_std > 0)
+                {
+                    score = (segment_stats[i].mean - global_mean) / global_std;
+                    if (score < 0) score = -score;
+                }
+                break;
+                
+            case 1: // Based on standard deviation (variability)
+                score = segment_stats[i].std_dev;
+                break;
+                
+            case 2: // Based on RMS
+                score = segment_stats[i].rms;
+                break;
+                
+            case 3: // Based on max value
+                score = segment_stats[i].max_value;
+                if (score < 0) score = -score;
+                break;
+                
+            default:
+                score = segment_stats[i].anomaly_score;
+                break;
+        }
+        
+        segment_stats[i].anomaly_score = score;
+        
+        if (score > max_score)
+        {
+            max_score = score;
+            most_anomalous = i;
+        }
+    }
+    
+    return most_anomalous;
+}
+
+/// @brief Detects anomalies in periodic signals
+/// @param period Expected period length
+/// @param tolerance Tolerance for period variations (0.0 to 1.0)
+/// @param anomaly_indices Output array for anomaly indices
+/// @param max_anomalies Maximum number of anomalies to detect
+/// @return Number of anomalies detected
+int SignalProcessing::DetectPeriodicAnomalies(int period, double tolerance, int *anomaly_indices, int max_anomalies)
+{
+    if (anomaly_indices == nullptr || this->index < period * 2 || max_anomalies <= 0)
+        return 0;
+    
+    int anomaly_count = 0;
+    int num_cycles = this->index / period;
+    
+    // Calculate average pattern for one period
+    double avg_pattern[NB_MAX_VALUES];
+    for (int i = 0; i < period; ++i)
+        avg_pattern[i] = 0.0;
+    
+    for (int cycle = 0; cycle < num_cycles; ++cycle)
+    {
+        for (int i = 0; i < period; ++i)
+        {
+            int idx = cycle * period + i;
+            if (idx < this->index)
+                avg_pattern[i] += this->SignalVector[idx];
+        }
+    }
+    
+    for (int i = 0; i < period; ++i)
+        avg_pattern[i] /= num_cycles;
+    
+    // Calculate standard deviation for each position in period
+    double std_pattern[NB_MAX_VALUES];
+    for (int i = 0; i < period; ++i)
+    {
+        double variance = 0.0;
+        for (int cycle = 0; cycle < num_cycles; ++cycle)
+        {
+            int idx = cycle * period + i;
+            if (idx < this->index)
+            {
+                double diff = this->SignalVector[idx] - avg_pattern[i];
+                variance += diff * diff;
+            }
+        }
+        std_pattern[i] = sqrt(variance / num_cycles);
+    }
+    
+    // Detect deviations
+    for (int i = 0; i < this->index && anomaly_count < max_anomalies; ++i)
+    {
+        int pattern_pos = i % period;
+        double expected = avg_pattern[pattern_pos];
+        double std_dev = std_pattern[pattern_pos];
+        
+        if (std_dev > 0)
+        {
+            double deviation = this->SignalVector[i] - expected;
+            if (deviation < 0) deviation = -deviation;
+            
+            if (deviation > tolerance * std_dev)
+            {
+                anomaly_indices[anomaly_count++] = i;
+            }
+        }
+    }
+    
+    return anomaly_count;
+}
+
+/// @brief Calculates overall anomaly score for the signal
+/// @param method Method: 0=ZScore, 1=IQR, 2=MaxDeviation
+/// @return Anomaly score
+double SignalProcessing::CalculateAnomalyScore(int method)
+{
+    if (this->index < 2)
+        return 0.0;
+    
+    double score = 0.0;
+    
+    switch (method)
+    {
+        case 0: // Based on max Z-score
+        {
+            double mean = GetMean();
+            double std_dev = GetStandardDeviation();
+            if (std_dev > 0)
+            {
+                double max_zscore = 0.0;
+                for (int i = 0; i < this->index; ++i)
+                {
+                    double z = (this->SignalVector[i] - mean) / std_dev;
+                    if (z < 0) z = -z;
+                    if (z > max_zscore) max_zscore = z;
+                }
+                score = max_zscore;
+            }
+            break;
+        }
+        
+        case 1: // Based on IQR ratio
+        {
+            double sorted[NB_MAX_VALUES];
+            for (int i = 0; i < this->index; ++i)
+                sorted[i] = this->SignalVector[i];
+            
+            QuickSortDouble(sorted, 0, this->index - 1);
+            
+            int q1_pos = this->index / 4;
+            int q3_pos = (3 * this->index) / 4;
+            double iqr = sorted[q3_pos] - sorted[q1_pos];
+            double range = sorted[this->index - 1] - sorted[0];
+            
+            if (iqr > 0)
+                score = range / iqr;
+            break;
+        }
+        
+        case 2: // Based on max deviation from mean
+        {
+            double mean = GetMean();
+            double max_dev = 0.0;
+            for (int i = 0; i < this->index; ++i)
+            {
+                double dev = this->SignalVector[i] - mean;
+                if (dev < 0) dev = -dev;
+                if (dev > max_dev) max_dev = dev;
+            }
+            score = max_dev;
+            break;
+        }
+        
+        default:
+            score = GetStandardDeviation();
+            break;
+    }
+    
+    return score;
+}
+
+// ========== FREQUENCY ANALYSIS IMPLEMENTATION ==========
+
+/// @brief Finds next power of 2 greater than or equal to n
+/// @param n Input number
+/// @return Next power of 2
+int SignalProcessing::NextPowerOfTwo(int n)
+{
+    int power = 1;
+    while (power < n)
+        power *= 2;
+    return power;
+}
+
+/// @brief Applies window function to data
+/// @param data Data array
+/// @param size Size of data
+/// @param window_type 0=Rectangular, 1=Hann, 2=Hamming, 3=Blackman
+void SignalProcessing::ApplyWindow(double *data, int size, int window_type)
+{
+    if (data == nullptr || size < 1)
+        return;
+    
+    for (int i = 0; i < size; ++i)
+    {
+        double w = 1.0;
+        
+        switch (window_type)
+        {
+            case 1: // Hann window
+                w = 0.5 * (1.0 - cos(2.0 * M_PI * i / (size - 1)));
+                break;
+                
+            case 2: // Hamming window
+                w = 0.54 - 0.46 * cos(2.0 * M_PI * i / (size - 1));
+                break;
+                
+            case 3: // Blackman window
+                w = 0.42 - 0.5 * cos(2.0 * M_PI * i / (size - 1)) + 
+                    0.08 * cos(4.0 * M_PI * i / (size - 1));
+                break;
+                
+            default: // Rectangular (no window)
+                w = 1.0;
+                break;
+        }
+        
+        data[i] *= w;
+    }
+}
+
+/// @brief Cooley-Tukey FFT algorithm
+/// @param real Real part of signal
+/// @param imag Imaginary part of signal
+/// @param size Size (must be power of 2)
+/// @param direction 1 for forward, -1 for inverse
+void SignalProcessing::FFT(double *real, double *imag, int size, int direction)
+{
+    if (size < 2 || real == nullptr || imag == nullptr)
+        return;
+    
+    // Bit-reversal permutation
+    int j = 0;
+    for (int i = 0; i < size - 1; ++i)
+    {
+        if (i < j)
+        {
+            double temp = real[i];
+            real[i] = real[j];
+            real[j] = temp;
+            
+            temp = imag[i];
+            imag[i] = imag[j];
+            imag[j] = temp;
+        }
+        
+        int k = size / 2;
+        while (k <= j)
+        {
+            j -= k;
+            k /= 2;
+        }
+        j += k;
+    }
+    
+    // FFT computation
+    for (int step = 2; step <= size; step *= 2)
+    {
+        double theta = direction * 2.0 * M_PI / step;
+        double w_real = cos(theta);
+        double w_imag = sin(theta);
+        
+        for (int start = 0; start < size; start += step)
+        {
+            double wr = 1.0;
+            double wi = 0.0;
+            
+            int half_step = step / 2;
+            for (int k = 0; k < half_step; ++k)
+            {
+                int idx1 = start + k;
+                int idx2 = idx1 + half_step;
+                
+                double tr = wr * real[idx2] - wi * imag[idx2];
+                double ti = wr * imag[idx2] + wi * real[idx2];
+                
+                real[idx2] = real[idx1] - tr;
+                imag[idx2] = imag[idx1] - ti;
+                real[idx1] += tr;
+                imag[idx1] += ti;
+                
+                double wr_temp = wr * w_real - wi * w_imag;
+                wi = wr * w_imag + wi * w_real;
+                wr = wr_temp;
+            }
+        }
+    }
+    
+    // Normalize for inverse FFT
+    if (direction == -1)
+    {
+        for (int i = 0; i < size; ++i)
+        {
+            real[i] /= size;
+            imag[i] /= size;
+        }
+    }
+}
+
+/// @brief Performs FFT analysis on a window of the signal
+/// @param start_index Starting index
+/// @param window_size Window size
+/// @param sampling_rate Sampling rate in Hz
+/// @param spectrum Output spectrum
+/// @return true if successful
+bool SignalProcessing::FFTAnalysis(int start_index, int window_size, double sampling_rate, FrequencySpectrum *spectrum)
+{
+    if (spectrum == nullptr || start_index < 0 || window_size < 2 || sampling_rate <= 0)
+        return false;
+    
+    int end_index = start_index + window_size;
+    if (end_index > this->index)
+        return false;
+    
+    // Round to nearest power of 2
+    int fft_size = NextPowerOfTwo(window_size);
+    
+    // Allocate temporary arrays
+    double *real = (double *)malloc(fft_size * sizeof(double));
+    double *imag = (double *)malloc(fft_size * sizeof(double));
+    
+    if (real == nullptr || imag == nullptr)
+    {
+        if (real) free(real);
+        if (imag) free(imag);
+        return false;
+    }
+    
+    // Copy data and zero-pad if necessary
+    for (int i = 0; i < fft_size; ++i)
+    {
+        if (i < window_size)
+        {
+            real[i] = this->SignalVector[start_index + i];
+        }
+        else
+        {
+            real[i] = 0.0;
+        }
+        imag[i] = 0.0;
+    }
+    
+    // Apply Hann window to reduce spectral leakage
+    ApplyWindow(real, window_size, 1);
+    
+    // Perform FFT
+    FFT(real, imag, fft_size, 1);
+    
+    // Calculate magnitudes and phases (only first half due to symmetry)
+    int num_bins = fft_size / 2 + 1;
+    spectrum->bins = (FrequencyBin *)malloc(num_bins * sizeof(FrequencyBin));
+    
+    if (spectrum->bins == nullptr)
+    {
+        free(real);
+        free(imag);
+        return false;
+    }
+    
+    spectrum->num_bins = num_bins;
+    spectrum->sampling_rate = sampling_rate;
+    spectrum->frequency_resolution = sampling_rate / fft_size;
+    spectrum->window_size = window_size;
+    spectrum->total_power = 0.0;
+    spectrum->dominant_frequency = 0.0;
+    
+    double max_magnitude = 0.0;
+    
+    for (int i = 0; i < num_bins; ++i)
+    {
+        spectrum->bins[i].frequency = i * spectrum->frequency_resolution;
+        spectrum->bins[i].magnitude = sqrt(real[i] * real[i] + imag[i] * imag[i]);
+        spectrum->bins[i].phase = atan2(imag[i], real[i]);
+        spectrum->bins[i].power = spectrum->bins[i].magnitude * spectrum->bins[i].magnitude;
+        
+        spectrum->total_power += spectrum->bins[i].power;
+        
+        if (i > 0 && spectrum->bins[i].magnitude > max_magnitude)
+        {
+            max_magnitude = spectrum->bins[i].magnitude;
+            spectrum->dominant_frequency = spectrum->bins[i].frequency;
+        }
+    }
+    
+    free(real);
+    free(imag);
+    
+    return true;
+}
+
+/// @brief Performs FFT analysis on entire signal
+/// @param sampling_rate Sampling rate in Hz
+/// @param spectrum Output spectrum
+/// @return true if successful
+bool SignalProcessing::FFTAnalysis(double sampling_rate, FrequencySpectrum *spectrum)
+{
+    return FFTAnalysis(0, this->index, sampling_rate, spectrum);
+}
+
+/// @brief Finds peaks in frequency spectrum
+/// @param spectrum Frequency spectrum
+/// @param min_magnitude Minimum magnitude threshold
+/// @param peak_frequencies Output array for frequencies
+/// @param peak_magnitudes Output array for magnitudes
+/// @param max_peaks Maximum number of peaks
+/// @return Number of peaks found
+int SignalProcessing::FindFrequencyPeaks(FrequencySpectrum *spectrum, double min_magnitude,
+                                        double *peak_frequencies, double *peak_magnitudes, int max_peaks)
+{
+    if (spectrum == nullptr || peak_frequencies == nullptr || peak_magnitudes == nullptr || max_peaks < 1)
+        return 0;
+    
+    int peak_count = 0;
+    
+    // Find local maxima
+    for (int i = 1; i < spectrum->num_bins - 1 && peak_count < max_peaks; ++i)
+    {
+        if (spectrum->bins[i].magnitude > spectrum->bins[i - 1].magnitude &&
+            spectrum->bins[i].magnitude > spectrum->bins[i + 1].magnitude &&
+            spectrum->bins[i].magnitude >= min_magnitude)
+        {
+            peak_frequencies[peak_count] = spectrum->bins[i].frequency;
+            peak_magnitudes[peak_count] = spectrum->bins[i].magnitude;
+            peak_count++;
+        }
+    }
+    
+    // Sort peaks by magnitude (descending) using bubble sort
+    for (int i = 0; i < peak_count - 1; ++i)
+    {
+        for (int j = 0; j < peak_count - i - 1; ++j)
+        {
+            if (peak_magnitudes[j] < peak_magnitudes[j + 1])
+            {
+                // Swap magnitudes
+                double temp_mag = peak_magnitudes[j];
+                peak_magnitudes[j] = peak_magnitudes[j + 1];
+                peak_magnitudes[j + 1] = temp_mag;
+                
+                // Swap frequencies
+                double temp_freq = peak_frequencies[j];
+                peak_frequencies[j] = peak_frequencies[j + 1];
+                peak_frequencies[j + 1] = temp_freq;
+            }
+        }
+    }
+    
+    return peak_count;
+}
+
+/// @brief Calculates power in a frequency band
+/// @param spectrum Frequency spectrum
+/// @param freq_low Lower frequency bound
+/// @param freq_high Upper frequency bound
+/// @return Power in band
+double SignalProcessing::GetPowerInBand(FrequencySpectrum *spectrum, double freq_low, double freq_high)
+{
+    if (spectrum == nullptr || freq_low < 0 || freq_high <= freq_low)
+        return 0.0;
+    
+    double power = 0.0;
+    
+    for (int i = 0; i < spectrum->num_bins; ++i)
+    {
+        if (spectrum->bins[i].frequency >= freq_low && spectrum->bins[i].frequency <= freq_high)
+        {
+            power += spectrum->bins[i].power;
+        }
+    }
+    
+    return power;
+}
+
+/// @brief Analyzes harmonics of a fundamental frequency
+/// @param spectrum Frequency spectrum
+/// @param fundamental Fundamental frequency
+/// @param num_harmonics Number of harmonics to analyze
+/// @param harmonic_magnitudes Output array for harmonic magnitudes
+/// @return Total harmonic distortion (THD)
+double SignalProcessing::AnalyzeHarmonics(FrequencySpectrum *spectrum, double fundamental,
+                                         int num_harmonics, double *harmonic_magnitudes)
+{
+    if (spectrum == nullptr || fundamental <= 0 || num_harmonics < 1 || harmonic_magnitudes == nullptr)
+        return 0.0;
+    
+    double fundamental_magnitude = 0.0;
+    double harmonics_sum = 0.0;
+    
+    // For each harmonic
+    for (int h = 1; h <= num_harmonics; ++h)
+    {
+        double target_freq = h * fundamental;
+        double tolerance = spectrum->frequency_resolution * 2.0;
+        
+        // Find closest bin to harmonic frequency
+        double max_mag = 0.0;
+        for (int i = 0; i < spectrum->num_bins; ++i)
+        {
+            double freq_diff = spectrum->bins[i].frequency - target_freq;
+            if (freq_diff < 0) freq_diff = -freq_diff;
+            
+            if (freq_diff < tolerance && spectrum->bins[i].magnitude > max_mag)
+            {
+                max_mag = spectrum->bins[i].magnitude;
+            }
+        }
+        
+        harmonic_magnitudes[h - 1] = max_mag;
+        
+        if (h == 1)
+        {
+            fundamental_magnitude = max_mag;
+        }
+        else
+        {
+            harmonics_sum += max_mag * max_mag;
+        }
+    }
+    
+    // Calculate THD (Total Harmonic Distortion)
+    if (fundamental_magnitude > 0)
+    {
+        return sqrt(harmonics_sum) / fundamental_magnitude;
+    }
+    
+    return 0.0;
+}
+
+/// @brief Compares frequency spectra of different segments
+/// @param marker_indices Segment start indices
+/// @param num_markers Number of segments
+/// @param sampling_rate Sampling rate
+/// @param spectra Output array of spectra
+/// @return Number of spectra computed
+int SignalProcessing::CompareSegmentSpectra(int *marker_indices, int num_markers,
+                                           double sampling_rate, FrequencySpectrum *spectra)
+{
+    if (marker_indices == nullptr || spectra == nullptr || num_markers < 1)
+        return 0;
+    
+    int count = 0;
+    
+    for (int seg = 0; seg < num_markers; ++seg)
+    {
+        int start = marker_indices[seg];
+        int end = (seg < num_markers - 1) ? marker_indices[seg + 1] : this->index;
+        int size = end - start;
+        
+        if (start >= 0 && end <= this->index && size > 4)
+        {
+            if (FFTAnalysis(start, size, sampling_rate, &spectra[count]))
+            {
+                count++;
+            }
+        }
+    }
+    
+    return count;
+}
+
+/// @brief Frees memory allocated for spectrum
+/// @param spectrum Spectrum to free
+void SignalProcessing::FreeSpectrum(FrequencySpectrum *spectrum)
+{
+    if (spectrum != nullptr && spectrum->bins != nullptr)
+    {
+        free(spectrum->bins);
+        spectrum->bins = nullptr;
+        spectrum->num_bins = 0;
+    }
+}
+
+/// @brief Detects frequency anomalies by comparing with baseline
+/// @param current_spectrum Current spectrum
+/// @param baseline_spectrum Baseline spectrum
+/// @param threshold Threshold ratio
+/// @return Anomaly score
+double SignalProcessing::DetectFrequencyAnomalies(FrequencySpectrum *current_spectrum,
+                                                 FrequencySpectrum *baseline_spectrum,
+                                                 double threshold)
+{
+    if (current_spectrum == nullptr || baseline_spectrum == nullptr)
+        return 0.0;
+    
+    int min_bins = (current_spectrum->num_bins < baseline_spectrum->num_bins) ? 
+                    current_spectrum->num_bins : baseline_spectrum->num_bins;
+    
+    double anomaly_score = 0.0;
+    int anomaly_count = 0;
+    
+    for (int i = 1; i < min_bins; ++i)  // Skip DC component
+    {
+        double baseline_mag = baseline_spectrum->bins[i].magnitude;
+        double current_mag = current_spectrum->bins[i].magnitude;
+        
+        if (baseline_mag > 0)
+        {
+            double ratio = current_mag / baseline_mag;
+            
+            if (ratio > threshold || ratio < (1.0 / threshold))
+            {
+                double deviation = (ratio > 1.0) ? (ratio - 1.0) : (1.0 - ratio);
+                anomaly_score += deviation;
+                anomaly_count++;
+            }
+        }
+    }
+    
+    // Normalize by number of bins
+    if (anomaly_count > 0)
+    {
+        anomaly_score /= anomaly_count;
+    }
+    
+    return anomaly_score;
+}
+
