@@ -23,6 +23,7 @@ A comprehensive C++ library for real-time signal processing, featuring filtering
 - **Harmonic Analysis**: Detect and analyze harmonic components, calculate THD
 - **Frequency Band Analysis**: Power analysis in specific frequency ranges
 - **Frequency-based Anomaly Detection**: Compare frequency spectra to detect abnormal patterns
+- **ML/AI Feature Extraction**: Extract 21 comprehensive features for machine learning models (neural networks, SVM, etc.)
 
 ## Function Descriptions
 See comments in `SignalProcessing.h` for details about each public method.
@@ -40,6 +41,7 @@ Each functionality has a dedicated test file in the `test/` folder:
 - `test_denoising.cpp`: Kalman filter, wavelet denoising, median filter, and noise estimation
 - `test_turbine_anomaly.cpp`: turbine vibration monitoring and blade anomaly detection
 - `test_frequency_analysis.cpp`: FFT analysis, harmonic detection, frequency-based anomaly detection
+- `test_ml_features.cpp`: ML/AI feature extraction for neural networks and SVM
 
 To build a test, run the corresponding script (from the `test/` folder):
 
@@ -54,6 +56,7 @@ To build a test, run the corresponding script (from the `test/` folder):
 ./build_denoising.sh
 ./build_turbine_anomaly.sh
 ./build_frequency_analysis.sh
+./build_ml_features.sh
 ```
 
 Or on Windows:
@@ -61,6 +64,7 @@ Or on Windows:
 build_denoising.bat
 build_turbine_anomaly.bat
 build_frequency_analysis.bat
+build_ml_features.bat
 ```
 
 To run a test:
@@ -100,6 +104,8 @@ chmod +x quick_test.sh
 See `test/TEST_SUITE_README.md` for detailed testing documentation.
 
 ## Examples
+
+### Console Example (ECG Processing)
 A complete working example demonstrating all features is available in the `examples/` folder:
 
 ```bash
@@ -117,7 +123,32 @@ This example simulates ECG signal processing including:
 - Event detection
 - Timestamp validation
 
+### 🎮 Interactive ImGui Demo (NEW!)
+Real-time visual demonstration with interactive GUI:
+
+```bash
+cd examples
+./setup_imgui.sh      # Downloads ImGui and ImPlot
+cd build
+cmake ..
+make
+./imgui_demo
+```
+
+**Features:**
+- 🎛️ Live signal generation (ECG, Turbine, Sine, Noise)
+- 🔧 Real-time filtering (Kalman, Median, Wavelet)
+- ⚠️ Interactive anomaly detection
+- 📈 FFT frequency analysis
+- 🤖 ML feature extraction (21 features)
+- 📊 Interactive plots with zoom/pan
+
+See `examples/README_IMGUI.md` for detailed instructions and screenshots.
+
 ## Documentation
+- **examples/README_IMGUI.md** - Interactive ImGui demo guide with screenshots
+- **ML_FEATURES_GUIDE.md** - Complete guide for ML/AI feature extraction and integration
+- **ANOMALY_DETECTION_GUIDE.md** - Comprehensive anomaly detection methods guide
 - **API_REFERENCE.md** - Complete API documentation with all functions
 - **PEAK_DETECTION_GUIDE.md** - Detailed guide for peak detection methods
 - **test/README_PEAK_DETECTION.md** - Peak detection test documentation

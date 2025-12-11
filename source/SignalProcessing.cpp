@@ -2036,3 +2036,297 @@ double SignalProcessing::DetectFrequencyAnomalies(FrequencySpectrum *current_spe
     return anomaly_score;
 }
 
+// ========== ML/AI FEATURE EXTRACTION IMPLEMENTATION ==========
+
+/// @brief Extracts comprehensive ML feature vector from current signal
+/// @param sampling_rate Sampling rate in Hz
+/// @param features Output structure for features
+/// @return true if successful
+bool SignalProcessing::ExtractMLFeatures(double sampling_rate, MLFeatureVector *features)
+{
+    if (features == nullptr || this->index < 10)
+    {
+        return false;
+    }
+    
+    int n = this->index;
+    
+    // === STATISTICAL FEATURES ===
+    features->mean = this->GetMean();
+    features->variance = this->GetVariance();
+    features->std_dev = this->GetStandardDeviation();
+    
+    // RMS (Root Mean Square)
+    double sum_squares = 0.0;
+    for (int i = 0; i < n; i++)
+    {
+        sum_squares += this->SignalVector[i] * this->SignalVector[i];
+    }
+    features->rms = sqrt(sum_squares / n);
+    
+    // Peak-to-peak and crest factor
+    double min_val = this->SignalVector[0];
+    double max_val = this->SignalVector[0];
+    for (int i = 1; i < n; i++)
+    {
+        if (this->SignalVector[i] < min_val) min_val = this->SignalVector[i];
+        if (this->SignalVector[i] > max_val) max_val = this->SignalVector[i];
+    }
+    features->peak_to_peak = max_val - min_val;
+    features->crest_factor = (features->rms > 0) ? (max_val / features->rms) : 0.0;
+    
+    // Skewness (third moment)
+    double sum_cubed = 0.0;
+    for (int i = 0; i < n; i++)
+    {
+        double deviation = this->SignalVector[i] - features->mean;
+        sum_cubed += deviation * deviation * deviation;
+    }
+    features->skewness = (features->std_dev > 0) ? 
+                         (sum_cubed / n) / (features->std_dev * features->std_dev * features->std_dev) : 0.0;
+    
+    // Kurtosis (fourth moment)
+    double sum_fourth = 0.0;
+    for (int i = 0; i < n; i++)
+    {
+        double deviation = this->SignalVector[i] - features->mean;
+        double dev_squared = deviation * deviation;
+        sum_fourth += dev_squared * dev_squared;
+    }
+    features->kurtosis = (features->variance > 0) ? 
+                         (sum_fourth / n) / (features->variance * features->variance) : 0.0;
+    
+    // === TIME DOMAIN FEATURES ===
+    
+    // Zero crossing rate
+    int zero_crossings = 0;
+    for (int i = 1; i < n; i++)
+    {
+        if ((this->SignalVector[i-1] >= 0 && this->SignalVector[i] < 0) ||
+            (this->SignalVector[i-1] < 0 && this->SignalVector[i] >= 0))
+        {
+            zero_crossings++;
+        }
+    }
+    features->zero_crossing_rate = (double)zero_crossings / n;
+    
+    // Mean crossing rate
+    int mean_crossings = 0;
+    for (int i = 1; i < n; i++)
+    {
+        if ((this->SignalVector[i-1] >= features->mean && this->SignalVector[i] < features->mean) ||
+            (this->SignalVector[i-1] < features->mean && this->SignalVector[i] >= features->mean))
+        {
+            mean_crossings++;
+        }
+    }
+    features->mean_crossing_rate = (double)mean_crossings / n;
+    
+    // Energy
+    features->energy = sum_squares;
+    
+    // Autocorrelation peak (first non-zero lag peak)
+    features->autocorr_peak = 0.0;
+    int max_lag = (n > 100) ? 100 : n / 2;
+    double max_autocorr = 0.0;
+    for (int lag = 1; lag < max_lag; lag++)
+    {
+        double autocorr = 0.0;
+        for (int i = 0; i < n - lag; i++)
+        {
+            autocorr += this->SignalVector[i] * this->SignalVector[i + lag];
+        }
+        autocorr /= (n - lag);
+        if (autocorr > max_autocorr)
+        {
+            max_autocorr = autocorr;
+            features->autocorr_peak = (double)lag / sampling_rate;  // in seconds
+        }
+    }
+    
+    // === FREQUENCY DOMAIN FEATURES ===
+    
+    FrequencySpectrum spectrum;
+    bool fft_success = this->FFTAnalysis(sampling_rate, &spectrum);
+    
+    if (fft_success)
+    {
+        features->dominant_frequency = spectrum.dominant_frequency;
+        features->total_power = spectrum.total_power;
+        
+        // Power in frequency bands
+        features->power_low_freq = this->GetPowerInBand(&spectrum, 0.0, 10.0);
+        features->power_mid_freq = this->GetPowerInBand(&spectrum, 10.0, 100.0);
+        features->power_high_freq = this->GetPowerInBand(&spectrum, 100.0, sampling_rate / 2.0);
+        
+        // Spectral centroid (center of mass of spectrum)
+        double weighted_sum = 0.0;
+        double total_magnitude = 0.0;
+        for (int i = 0; i < spectrum.num_bins; i++)
+        {
+            weighted_sum += spectrum.bins[i].frequency * spectrum.bins[i].magnitude;
+            total_magnitude += spectrum.bins[i].magnitude;
+        }
+        features->spectral_centroid = (total_magnitude > 0) ? (weighted_sum / total_magnitude) : 0.0;
+        
+        // Spectral spread (standard deviation around centroid)
+        double spread_sum = 0.0;
+        for (int i = 0; i < spectrum.num_bins; i++)
+        {
+            double diff = spectrum.bins[i].frequency - features->spectral_centroid;
+            spread_sum += diff * diff * spectrum.bins[i].magnitude;
+        }
+        features->spectral_spread = (total_magnitude > 0) ? 
+                                    sqrt(spread_sum / total_magnitude) : 0.0;
+        
+        // Spectral entropy (measure of spectral complexity)
+        features->spectral_entropy = 0.0;
+        for (int i = 0; i < spectrum.num_bins; i++)
+        {
+            if (spectrum.bins[i].magnitude > 0)
+            {
+                double normalized = spectrum.bins[i].magnitude / total_magnitude;
+                features->spectral_entropy -= normalized * log(normalized + 1e-10);
+            }
+        }
+        
+        this->FreeSpectrum(&spectrum);
+    }
+    else
+    {
+        // FFT failed, set frequency features to 0
+        features->dominant_frequency = 0.0;
+        features->total_power = 0.0;
+        features->power_low_freq = 0.0;
+        features->power_mid_freq = 0.0;
+        features->power_high_freq = 0.0;
+        features->spectral_centroid = 0.0;
+        features->spectral_spread = 0.0;
+        features->spectral_entropy = 0.0;
+    }
+    
+    features->num_features = 21;  // Total count
+    return true;
+}
+
+/// @brief Extracts features from a specific segment
+/// @param start_index Starting index
+/// @param window_size Size of segment
+/// @param sampling_rate Sampling rate in Hz
+/// @param features Output structure
+/// @return true if successful
+bool SignalProcessing::ExtractMLFeaturesFromSegment(int start_index, int window_size,
+                                                    double sampling_rate, MLFeatureVector *features)
+{
+    if (features == nullptr || start_index < 0 || window_size <= 0)
+    {
+        return false;
+    }
+    
+    if (start_index + window_size > this->index)
+    {
+        return false;  // Segment out of bounds
+    }
+    
+    // Create temporary SignalProcessing object with segment data
+    SignalProcessing temp;
+    for (int i = 0; i < window_size; i++)
+    {
+        temp.AddValue(this->SignalVector[start_index + i]);
+    }
+    
+    return temp.ExtractMLFeatures(sampling_rate, features);
+}
+
+/// @brief Exports features to flat array for ML libraries
+/// @param features Feature structure
+/// @param output_array Output array (size >= 21)
+/// @return Number of features exported
+int SignalProcessing::ExportFeaturesToArray(MLFeatureVector *features, double *output_array)
+{
+    if (features == nullptr || output_array == nullptr)
+    {
+        return 0;
+    }
+    
+    int idx = 0;
+    
+    // Statistical features (8)
+    output_array[idx++] = features->mean;
+    output_array[idx++] = features->std_dev;
+    output_array[idx++] = features->variance;
+    output_array[idx++] = features->skewness;
+    output_array[idx++] = features->kurtosis;
+    output_array[idx++] = features->rms;
+    output_array[idx++] = features->peak_to_peak;
+    output_array[idx++] = features->crest_factor;
+    
+    // Frequency features (9)
+    output_array[idx++] = features->dominant_frequency;
+    output_array[idx++] = features->spectral_centroid;
+    output_array[idx++] = features->spectral_spread;
+    output_array[idx++] = features->spectral_entropy;
+    output_array[idx++] = features->total_power;
+    output_array[idx++] = features->power_low_freq;
+    output_array[idx++] = features->power_mid_freq;
+    output_array[idx++] = features->power_high_freq;
+    
+    // Time domain features (4)
+    output_array[idx++] = features->zero_crossing_rate;
+    output_array[idx++] = features->mean_crossing_rate;
+    output_array[idx++] = features->energy;
+    output_array[idx++] = features->autocorr_peak;
+    
+    return idx;  // Should be 21
+}
+
+/// @brief Normalizes features using z-score normalization
+/// @param features Feature vector to normalize
+/// @param mean_values Mean values from training set
+/// @param std_values Std dev values from training set
+void SignalProcessing::NormalizeMLFeatures(MLFeatureVector *features, 
+                                          double *mean_values, double *std_values)
+{
+    if (features == nullptr || mean_values == nullptr || std_values == nullptr)
+    {
+        return;
+    }
+    
+    double temp_array[21];
+    this->ExportFeaturesToArray(features, temp_array);
+    
+    // Apply z-score normalization: (x - mean) / std
+    for (int i = 0; i < 21; i++)
+    {
+        if (std_values[i] > 0)
+        {
+            temp_array[i] = (temp_array[i] - mean_values[i]) / std_values[i];
+        }
+    }
+    
+    // Put normalized values back into structure
+    int idx = 0;
+    features->mean = temp_array[idx++];
+    features->std_dev = temp_array[idx++];
+    features->variance = temp_array[idx++];
+    features->skewness = temp_array[idx++];
+    features->kurtosis = temp_array[idx++];
+    features->rms = temp_array[idx++];
+    features->peak_to_peak = temp_array[idx++];
+    features->crest_factor = temp_array[idx++];
+    
+    features->dominant_frequency = temp_array[idx++];
+    features->spectral_centroid = temp_array[idx++];
+    features->spectral_spread = temp_array[idx++];
+    features->spectral_entropy = temp_array[idx++];
+    features->total_power = temp_array[idx++];
+    features->power_low_freq = temp_array[idx++];
+    features->power_mid_freq = temp_array[idx++];
+    features->power_high_freq = temp_array[idx++];
+    
+    features->zero_crossing_rate = temp_array[idx++];
+    features->mean_crossing_rate = temp_array[idx++];
+    features->energy = temp_array[idx++];
+    features->autocorr_peak = temp_array[idx++];
+}
+

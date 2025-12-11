@@ -81,6 +81,41 @@ typedef struct FrequencySpectrum
     int window_size;        // Size of analyzed window
 } FrequencySpectrum;
 
+// --------------------------------------------------------
+// STRUCT MLFeatureVector - Feature vector for ML/AI
+// --------------------------------------------------------
+typedef struct MLFeatureVector
+{
+    // Statistical features
+    double mean;
+    double std_dev;
+    double variance;
+    double skewness;
+    double kurtosis;
+    double rms;
+    double peak_to_peak;
+    double crest_factor;
+    
+    // Frequency domain features
+    double dominant_frequency;
+    double spectral_centroid;
+    double spectral_spread;
+    double spectral_entropy;
+    double total_power;
+    double power_low_freq;    // 0-10 Hz
+    double power_mid_freq;    // 10-100 Hz
+    double power_high_freq;   // 100+ Hz
+    
+    // Time domain features
+    double zero_crossing_rate;
+    double mean_crossing_rate;  // Rate of crossing the mean value
+    double energy;
+    double autocorr_peak;     // First autocorrelation peak (periodicity)
+    
+    // Total number of features
+    int num_features;
+} MLFeatureVector;
+
 class SignalProcessing{
 public:
     /**
@@ -545,6 +580,56 @@ public:
     double DetectFrequencyAnomalies(FrequencySpectrum *current_spectrum, 
                                    FrequencySpectrum *baseline_spectrum, 
                                    double threshold);
+
+    // ========== ML/AI FEATURE EXTRACTION ==========
+    
+    /**
+     * @brief Extracts comprehensive feature vector for ML/AI applications
+     * @param sampling_rate Sampling rate in Hz (needed for frequency features)
+     * @param features Output structure containing all extracted features
+     * @return true if successful, false otherwise
+     * 
+     * Extracts 21 features from the current signal:
+     * - Statistical: mean, std_dev, variance, skewness, kurtosis, RMS, peak-to-peak, crest factor
+     * - Frequency: dominant freq, spectral centroid, spectral spread, spectral entropy, power bands
+     * - Time domain: zero-crossing rate, energy, autocorrelation peak
+     * 
+     * Perfect for feeding into neural networks, SVMs, or other ML models
+     */
+    bool ExtractMLFeatures(double sampling_rate, MLFeatureVector *features);
+    
+    /**
+     * @brief Extracts feature vector from a specific segment/window
+     * @param start_index Starting index of the segment
+     * @param window_size Size of the segment to analyze
+     * @param sampling_rate Sampling rate in Hz
+     * @param features Output structure containing all extracted features
+     * @return true if successful, false otherwise
+     */
+    bool ExtractMLFeaturesFromSegment(int start_index, int window_size, 
+                                      double sampling_rate, MLFeatureVector *features);
+    
+    /**
+     * @brief Exports features to a flat array for direct ML library input
+     * @param features Feature vector structure
+     * @param output_array Output array (must be allocated, size >= 21)
+     * @return Number of features exported
+     * 
+     * Exports in order: statistical (8) → frequency (9) → time domain (4)
+     * Compatible with TensorFlow, PyTorch, scikit-learn format requirements
+     */
+    int ExportFeaturesToArray(MLFeatureVector *features, double *output_array);
+    
+    /**
+     * @brief Normalizes feature vector for ML input (z-score normalization)
+     * @param features Feature vector to normalize
+     * @param mean_values Array of mean values for each feature (size 21)
+     * @param std_values Array of std dev values for each feature (size 21)
+     * 
+     * Apply this before feeding to neural networks for better convergence
+     * Compute mean_values and std_values from your training dataset
+     */
+    void NormalizeMLFeatures(MLFeatureVector *features, double *mean_values, double *std_values);
 
 private:
         int IndexOf(double value, prob_dist *pd);

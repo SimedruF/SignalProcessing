@@ -1,0 +1,32 @@
+# ImGui and ImPlot (cloned by setup script)
+imgui/
+implot/
+
+# Build directories
+build/
+cmake-build-*/
+
+# Compiled binaries
+imgui_demo
+imgui_demo.exe
+example_complete
+example_complete.exe
+
+# IDE files
+.vs/
+.vscode/
+*.user
+*.suo
+*.sln
+*.vcxproj
+*.vcxproj.filters
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Object files
+*.o
+*.obj
