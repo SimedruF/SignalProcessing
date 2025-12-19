@@ -631,6 +631,92 @@ public:
      */
     void NormalizeMLFeatures(MLFeatureVector *features, double *mean_values, double *std_values);
 
+    // ========== DECIMATION AND INTERPOLATION ==========
+    
+    /**
+     * @brief Decimates signal by keeping every Nth sample (downsampling)
+     * @param factor Decimation factor (e.g., 2 = keep every 2nd sample, 4 = every 4th)
+     * @param out_vector Output array for decimated signal (size >= GetIndex()/factor)
+     * @param apply_antialiasing If true, applies low-pass filter before decimation
+     * @return Number of samples in decimated signal
+     * 
+     * Reduces sampling rate by factor. If apply_antialiasing=true, applies
+     * moving average filter to prevent aliasing artifacts.
+     */
+    int Decimate(int factor, double *out_vector, bool apply_antialiasing = true);
+    
+    /**
+     * @brief Interpolates signal using linear interpolation (upsampling)
+     * @param factor Interpolation factor (e.g., 2 = double samples, 4 = quadruple)
+     * @param out_vector Output array for interpolated signal (size >= GetIndex()*factor)
+     * @return Number of samples in interpolated signal
+     * 
+     * Increases sampling rate by inserting linearly interpolated values
+     * between existing samples.
+     */
+    int InterpolateLinear(int factor, double *out_vector);
+    
+    /**
+     * @brief Resamples signal to a new sampling rate
+     * @param current_rate Current sampling rate in Hz
+     * @param target_rate Target sampling rate in Hz
+     * @param out_vector Output array for resampled signal (size >= calculated new size)
+     * @return Number of samples in resampled signal
+     * 
+     * Combines decimation and interpolation to achieve arbitrary resampling.
+     * Example: 100 Hz → 48 Hz for audio processing
+     */
+    int Resample(double current_rate, double target_rate, double *out_vector);
+
+    // ========== CORRELATION ANALYSIS ==========
+    
+    /**
+     * @brief Computes autocorrelation of the signal
+     * @param max_lag Maximum lag to compute (number of shifts)
+     * @param out_correlation Output array for autocorrelation values (size >= max_lag+1)
+     * @param normalize If true, normalizes output to [-1, 1] range
+     * @return Number of correlation values computed
+     * 
+     * Autocorrelation measures similarity of signal with delayed version of itself.
+     * Useful for:
+     * - Detecting periodicity
+     * - Finding fundamental frequency
+     * - Measuring signal predictability
+     */
+    int Autocorrelation(int max_lag, double *out_correlation, bool normalize = true);
+    
+    /**
+     * @brief Computes cross-correlation between current signal and another signal
+     * @param signal2 Second signal array
+     * @param signal2_size Size of second signal
+     * @param max_lag Maximum lag to compute (positive and negative)
+     * @param out_correlation Output array for correlation values (size >= 2*max_lag+1)
+     * @param normalize If true, normalizes output to [-1, 1] range
+     * @return Number of correlation values computed
+     * 
+     * Cross-correlation measures similarity between two signals at different time shifts.
+     * Useful for:
+     * - Time delay estimation
+     * - Pattern matching
+     * - Signal alignment
+     * - Detecting common patterns
+     */
+    int CrossCorrelation(double *signal2, int signal2_size, int max_lag, 
+                        double *out_correlation, bool normalize = true);
+    
+    /**
+     * @brief Finds the lag with maximum correlation value
+     * @param correlation Correlation array (from Autocorrelation or CrossCorrelation)
+     * @param size Size of correlation array
+     * @param peak_value Output parameter for the peak correlation value
+     * @return Lag index with maximum correlation
+     * 
+     * Useful for finding:
+     * - Fundamental period (autocorrelation)
+     * - Time delay between signals (cross-correlation)
+     */
+    int FindCorrelationPeak(double *correlation, int size, double *peak_value);
+
 private:
         int IndexOf(double value, prob_dist *pd);
         void HaarWaveletTransform(double *data, int size, int direction);

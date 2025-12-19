@@ -2330,3 +2330,310 @@ void SignalProcessing::NormalizeMLFeatures(MLFeatureVector *features,
     features->autocorr_peak = temp_array[idx++];
 }
 
+// ========== DECIMATION AND INTERPOLATION IMPLEMENTATION ==========
+
+/// @brief Decimates signal by factor (downsampling)
+/// @param factor Decimation factor
+/// @param out_vector Output array
+/// @param apply_antialiasing Apply low-pass filter before decimation
+/// @return Number of output samples
+int SignalProcessing::Decimate(int factor, double *out_vector, bool apply_antialiasing)
+{
+    if (out_vector == nullptr || factor < 1 || this->index < factor)
+    {
+        return 0;
+    }
+    
+    double *temp_signal = this->SignalVector;
+    double filtered[NB_MAX_VALUES];
+    
+    // Apply anti-aliasing filter if requested
+    if (apply_antialiasing && factor > 1)
+    {
+        // Use moving average as low-pass filter
+        // Window size = factor to prevent aliasing
+        int window = factor;
+        for (int i = 0; i < this->index; i++)
+        {
+            double sum = 0.0;
+            int count = 0;
+            int start = (i - window/2 < 0) ? 0 : i - window/2;
+            int end = (i + window/2 >= this->index) ? this->index - 1 : i + window/2;
+            
+            for (int j = start; j <= end; j++)
+            {
+                sum += this->SignalVector[j];
+                count++;
+            }
+            filtered[i] = sum / count;
+        }
+        temp_signal = filtered;
+    }
+    
+    // Decimate by keeping every Nth sample
+    int out_index = 0;
+    for (int i = 0; i < this->index; i += factor)
+    {
+        out_vector[out_index++] = temp_signal[i];
+    }
+    
+    return out_index;
+}
+
+/// @brief Interpolates signal using linear interpolation
+/// @param factor Interpolation factor
+/// @param out_vector Output array
+/// @return Number of output samples
+int SignalProcessing::InterpolateLinear(int factor, double *out_vector)
+{
+    if (out_vector == nullptr || factor < 1 || this->index < 2)
+    {
+        return 0;
+    }
+    
+    if (factor == 1)
+    {
+        // No interpolation needed
+        for (int i = 0; i < this->index; i++)
+        {
+            out_vector[i] = this->SignalVector[i];
+        }
+        return this->index;
+    }
+    
+    int out_index = 0;
+    
+    // Interpolate between each pair of samples
+    for (int i = 0; i < this->index - 1; i++)
+    {
+        double y0 = this->SignalVector[i];
+        double y1 = this->SignalVector[i + 1];
+        
+        // Insert original sample
+        out_vector[out_index++] = y0;
+        
+        // Insert interpolated samples
+        for (int j = 1; j < factor; j++)
+        {
+            double t = (double)j / factor;  // 0 < t < 1
+            out_vector[out_index++] = y0 + t * (y1 - y0);  // Linear interpolation
+        }
+    }
+    
+    // Add last sample
+    out_vector[out_index++] = this->SignalVector[this->index - 1];
+    
+    return out_index;
+}
+
+/// @brief Resamples signal to new sampling rate
+/// @param current_rate Current sampling rate in Hz
+/// @param target_rate Target sampling rate in Hz
+/// @param out_vector Output array
+/// @return Number of output samples
+int SignalProcessing::Resample(double current_rate, double target_rate, double *out_vector)
+{
+    if (out_vector == nullptr || current_rate <= 0 || target_rate <= 0)
+    {
+        return 0;
+    }
+    
+    double ratio = target_rate / current_rate;
+    
+    if (ratio == 1.0)
+    {
+        // No resampling needed
+        for (int i = 0; i < this->index; i++)
+        {
+            out_vector[i] = this->SignalVector[i];
+        }
+        return this->index;
+    }
+    else if (ratio < 1.0)
+    {
+        // Downsampling - use decimation
+        int factor = (int)(1.0 / ratio + 0.5);  // Round to nearest integer
+        return this->Decimate(factor, out_vector, true);
+    }
+    else
+    {
+        // Upsampling - use interpolation
+        int factor = (int)(ratio + 0.5);  // Round to nearest integer
+        return this->InterpolateLinear(factor, out_vector);
+    }
+}
+
+// ========== CORRELATION ANALYSIS IMPLEMENTATION ==========
+
+/// @brief Computes autocorrelation of signal
+/// @param max_lag Maximum lag to compute
+/// @param out_correlation Output correlation array
+/// @param normalize Normalize to [-1, 1]
+/// @return Number of correlation values
+int SignalProcessing::Autocorrelation(int max_lag, double *out_correlation, bool normalize)
+{
+    if (out_correlation == nullptr || max_lag < 0 || this->index < 2)
+    {
+        return 0;
+    }
+    
+    // Limit max_lag to signal length
+    if (max_lag >= this->index)
+    {
+        max_lag = this->index - 1;
+    }
+    
+    double mean = this->GetMean();
+    int n = this->index;
+    
+    // Compute autocorrelation for each lag
+    for (int lag = 0; lag <= max_lag; lag++)
+    {
+        double sum = 0.0;
+        int count = n - lag;
+        
+        for (int i = 0; i < count; i++)
+        {
+            sum += (this->SignalVector[i] - mean) * 
+                   (this->SignalVector[i + lag] - mean);
+        }
+        
+        out_correlation[lag] = sum / count;
+    }
+    
+    // Normalize if requested
+    if (normalize && out_correlation[0] != 0.0)
+    {
+        double r0 = out_correlation[0];  // Variance
+        for (int lag = 0; lag <= max_lag; lag++)
+        {
+            out_correlation[lag] /= r0;
+        }
+    }
+    
+    return max_lag + 1;
+}
+
+/// @brief Computes cross-correlation between two signals
+/// @param signal2 Second signal
+/// @param signal2_size Size of second signal
+/// @param max_lag Maximum lag (positive and negative)
+/// @param out_correlation Output correlation array
+/// @param normalize Normalize to [-1, 1]
+/// @return Number of correlation values
+int SignalProcessing::CrossCorrelation(double *signal2, int signal2_size, int max_lag,
+                                       double *out_correlation, bool normalize)
+{
+    if (out_correlation == nullptr || signal2 == nullptr || 
+        max_lag < 0 || this->index < 1 || signal2_size < 1)
+    {
+        return 0;
+    }
+    
+    double mean1 = this->GetMean();
+    
+    // Calculate mean of signal2
+    double sum2 = 0.0;
+    for (int i = 0; i < signal2_size; i++)
+    {
+        sum2 += signal2[i];
+    }
+    double mean2 = sum2 / signal2_size;
+    
+    int out_index = 0;
+    
+    // Compute cross-correlation for negative lags
+    for (int lag = -max_lag; lag <= max_lag; lag++)
+    {
+        double sum = 0.0;
+        int count = 0;
+        
+        for (int i = 0; i < this->index; i++)
+        {
+            int j = i + lag;
+            if (j >= 0 && j < signal2_size)
+            {
+                sum += (this->SignalVector[i] - mean1) * (signal2[j] - mean2);
+                count++;
+            }
+        }
+        
+        if (count > 0)
+        {
+            out_correlation[out_index++] = sum / count;
+        }
+        else
+        {
+            out_correlation[out_index++] = 0.0;
+        }
+    }
+    
+    // Normalize if requested
+    if (normalize)
+    {
+        // Compute variances
+        double var1 = 0.0;
+        for (int i = 0; i < this->index; i++)
+        {
+            double diff = this->SignalVector[i] - mean1;
+            var1 += diff * diff;
+        }
+        var1 /= this->index;
+        
+        double var2 = 0.0;
+        for (int i = 0; i < signal2_size; i++)
+        {
+            double diff = signal2[i] - mean2;
+            var2 += diff * diff;
+        }
+        var2 /= signal2_size;
+        
+        double normalization = sqrt(var1 * var2);
+        if (normalization > 0.0)
+        {
+            for (int i = 0; i < out_index; i++)
+            {
+                out_correlation[i] /= normalization;
+            }
+        }
+    }
+    
+    return out_index;
+}
+
+/// @brief Finds lag with maximum correlation
+/// @param correlation Correlation array
+/// @param size Array size
+/// @param peak_value Output peak value
+/// @return Index of peak
+int SignalProcessing::FindCorrelationPeak(double *correlation, int size, double *peak_value)
+{
+    if (correlation == nullptr || size < 1)
+    {
+        if (peak_value != nullptr) *peak_value = 0.0;
+        return -1;
+    }
+    
+    int peak_index = 0;
+    double max_value = correlation[0];
+    
+    // Skip lag=0 for autocorrelation (always 1.0 when normalized)
+    int start = (size > 1) ? 1 : 0;
+    
+    for (int i = start; i < size; i++)
+    {
+        if (correlation[i] > max_value)
+        {
+            max_value = correlation[i];
+            peak_index = i;
+        }
+    }
+    
+    if (peak_value != nullptr)
+    {
+        *peak_value = max_value;
+    }
+    
+    return peak_index;
+}
+

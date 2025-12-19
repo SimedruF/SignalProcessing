@@ -24,6 +24,8 @@ A comprehensive C++ library for real-time signal processing, featuring filtering
 - **Frequency Band Analysis**: Power analysis in specific frequency ranges
 - **Frequency-based Anomaly Detection**: Compare frequency spectra to detect abnormal patterns
 - **ML/AI Feature Extraction**: Extract 21 comprehensive features for machine learning models (neural networks, SVM, etc.)
+- **Decimation and Interpolation**: Downsample, upsample, and resample signals for rate conversion
+- **Correlation Analysis**: Autocorrelation for periodicity detection, cross-correlation for signal alignment and time delay estimation
 
 ## Function Descriptions
 See comments in `SignalProcessing.h` for details about each public method.
@@ -42,6 +44,8 @@ Each functionality has a dedicated test file in the `test/` folder:
 - `test_turbine_anomaly.cpp`: turbine vibration monitoring and blade anomaly detection
 - `test_frequency_analysis.cpp`: FFT analysis, harmonic detection, frequency-based anomaly detection
 - `test_ml_features.cpp`: ML/AI feature extraction for neural networks and SVM
+- `test_decimation.cpp`: decimation, interpolation, and resampling
+- `test_correlation.cpp`: autocorrelation and cross-correlation analysis
 
 To build a test, run the corresponding script (from the `test/` folder):
 
@@ -57,6 +61,8 @@ To build a test, run the corresponding script (from the `test/` folder):
 ./build_turbine_anomaly.sh
 ./build_frequency_analysis.sh
 ./build_ml_features.sh
+./build_decimation.sh
+./build_correlation.sh
 ```
 
 Or on Windows:
@@ -65,6 +71,8 @@ build_denoising.bat
 build_turbine_anomaly.bat
 build_frequency_analysis.bat
 build_ml_features.bat
+build_decimation.bat
+build_correlation.bat
 ```
 
 To run a test:
@@ -446,8 +454,8 @@ Possible real-time signal processing operations to implement:
 - Statistical calculations (mean, variance, standard deviation, skewness, kurtosis) ✓ (mean, variance, std dev implemented)
 - Event detection (thresholding, zero-crossing) ✓ (implemented)
 - Smoothing (exponential, Savitzky-Golay) ✓ (exponential smoothing implemented)
-- Decimation and interpolation
-- Autocorrelation and cross-correlation analysis
+- Decimation and interpolation ✓ (implemented: decimate, linear interpolation, resample)
+- Autocorrelation and cross-correlation analysis ✓ (implemented: autocorrelation, cross-correlation, peak finding)
 - Trend or anomaly detection ✓ (implemented: Z-Score, IQR, MAD, periodic, sudden change detection, frequency-based)
 - Adaptive filters (LMS, RLS) – they adjust their coefficients based on the signal in order to track time-varying changes.
 - Notch filters – remove a very narrow frequency component (e.g., 50/60 Hz from the power line).
