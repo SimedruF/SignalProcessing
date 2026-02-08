@@ -3,6 +3,7 @@
 // Requires: ImGui, ImPlot, GLFW, OpenGL
 
 #include "../source/SignalProcessing.h"
+#include "../source/SignalRecorder.hpp"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -11,6 +12,10 @@
 #include <stdio.h>
 #include <math.h>
 #include <vector>
+#include <ctime>
+#include <string>
+#include <unistd.h>
+#include <limits.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -49,6 +54,26 @@ std::vector<int> anomaly_indices;
 bool show_ml_features = false;
 MLFeatureVector ml_features;
 
+// HDF5 Recording
+bool show_save_dialog = false;
+char save_filename[256] = "signal_recording.h5";
+char session_info[256] = "Interactive ImGui Session";
+bool save_success = false;
+bool save_error = false;
+char save_message[512] = "";
+// HDF5 Loading
+bool show_load_dialog = false;
+char load_filename[256] = "signal_recording.h5";
+bool load_success = false;
+bool load_error = false;
+char load_message[512] = "";
+std::vector<double> loaded_signal;
+std::vector<double> loaded_filtered;
+std::vector<int> loaded_anomalies;
+std::vector<double> loaded_fft_freq;
+std::vector<double> loaded_fft_mag;
+char loaded_info[512] = "";
+bool show_loaded_data = false;
 // Generate signal based on type
 void GenerateSignal() {
     sp.ClearVector();
@@ -194,6 +219,293 @@ void ExtractMLFeatures() {
     sp_ml.ExtractMLFeatures(sampling_rate, &ml_features);
 }
 
+// Save signal to HDF5
+void SaveSignalToHDF5() {
+    try {
+        SignalRecorder recorder(save_filename);
+        
+        // Add session metadata
+        time_t now = time(0);
+        char timestamp[64];
+        strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", localtime(&now));
+        
+        recorder.addMetadata("Session", "timestamp", timestamp);
+        recorder.addMetadata("Session", "info", session_info);
+        
+        // Signal parameters
+        const char* signal_names[] = { "Sine Wave", "ECG Signal", "Turbine Vibration", "White Noise" };
+        recorder.addMetadata("Parameters", "signal_type", signal_names[current_signal]);
+        
+        char param_str[128];
+        sprintf(param_str, "%.2f", frequency);
+        recorder.addMetadata("Parameters", "frequency_hz", param_str);
+        sprintf(param_str, "%.2f", noise_level);
+        recorder.addMetadata("Parameters", "noise_level", param_str);
+        sprintf(param_str, "%d", signal_length);
+        recorder.addMetadata("Parameters", "signal_length", param_str);
+        sprintf(param_str, "%.1f", sampling_rate);
+        recorder.addMetadata("Parameters", "sampling_rate_hz", param_str);
+        
+        // Save original signal
+        std::vector<float> signal_float(signal_data.begin(), signal_data.end());
+        recorder.addFloatVector("Signals/Raw", "original_signal", signal_float, "amplitude");
+        
+        // Save filtered signal
+        std::vector<float> filtered_float(filtered_data.begin(), filtered_data.end());
+        recorder.addFloatVector("Signals/Processed", "filtered_signal", filtered_float, "amplitude");
+        
+        // Save filter information
+        if (apply_kalman) {
+            recorder.addMetadata("Filters", "kalman", "enabled");
+            sprintf(param_str, "%.4f", kalman_process);
+            recorder.addMetadata("Filters", "kalman_process_noise", param_str);
+            sprintf(param_str, "%.4f", kalman_measure);
+            recorder.addMetadata("Filters", "kalman_measure_noise", param_str);
+        }
+        if (apply_median) {
+            recorder.addMetadata("Filters", "median", "enabled");
+            sprintf(param_str, "%d", median_window);
+            recorder.addMetadata("Filters", "median_window", param_str);
+        }
+        if (apply_wavelet) {
+            recorder.addMetadata("Filters", "wavelet", "enabled");
+        }
+        
+        // Save anomalies if detected
+        if (!anomaly_indices.empty()) {
+            const char* method_names[] = { "Z-Score", "IQR", "MAD" };
+            recorder.addMetadata("Anomalies", "method", method_names[anomaly_method]);
+            sprintf(param_str, "%.2f", anomaly_threshold);
+            recorder.addMetadata("Anomalies", "threshold", param_str);
+            sprintf(param_str, "%d", (int)anomaly_indices.size());
+            recorder.addMetadata("Anomalies", "count", param_str);
+            
+            // Save anomaly indices
+            std::vector<float> anomaly_float(anomaly_indices.begin(), anomaly_indices.end());
+            recorder.addFloatVector("Anomalies", "indices", anomaly_float, "sample_index");
+        }
+        
+        // Save FFT data
+        if (!fft_frequencies.empty()) {
+            std::vector<float> fft_freq_float(fft_frequencies.begin(), fft_frequencies.end());
+            std::vector<float> fft_mag_float(fft_magnitudes.begin(), fft_magnitudes.end());
+            recorder.addFloatVector("Analysis/FFT", "frequencies", fft_freq_float, "Hz");
+            recorder.addFloatVector("Analysis/FFT", "magnitudes", fft_mag_float, "amplitude");
+        }
+        
+        // Save ML features if extracted
+        if (show_ml_features) {
+            std::vector<float> ml_vector;
+            ml_vector.push_back((float)ml_features.mean);
+            ml_vector.push_back((float)ml_features.std_dev);
+            ml_vector.push_back((float)ml_features.variance);
+            ml_vector.push_back((float)ml_features.skewness);
+            ml_vector.push_back((float)ml_features.kurtosis);
+            ml_vector.push_back((float)ml_features.rms);
+            ml_vector.push_back((float)ml_features.peak_to_peak);
+            ml_vector.push_back((float)ml_features.crest_factor);
+            ml_vector.push_back((float)ml_features.dominant_frequency);
+            ml_vector.push_back((float)ml_features.spectral_centroid);
+            ml_vector.push_back((float)ml_features.spectral_spread);
+            ml_vector.push_back((float)ml_features.spectral_entropy);
+            ml_vector.push_back((float)ml_features.total_power);
+            ml_vector.push_back((float)ml_features.power_low_freq);
+            ml_vector.push_back((float)ml_features.power_mid_freq);
+            ml_vector.push_back((float)ml_features.power_high_freq);
+            ml_vector.push_back((float)ml_features.zero_crossing_rate);
+            ml_vector.push_back((float)ml_features.mean_crossing_rate);
+            ml_vector.push_back((float)ml_features.energy);
+            ml_vector.push_back((float)ml_features.autocorr_peak);
+            
+            recorder.addFloatVector("Analysis/ML_Features", "feature_vector", ml_vector, "mixed");
+            
+            // Add feature names as metadata
+            recorder.addMetadata("Analysis/ML_Features", "feature_names", 
+                "mean,std_dev,variance,skewness,kurtosis,rms,peak_to_peak,crest_factor,"
+                "dominant_frequency,spectral_centroid,spectral_spread,spectral_entropy,"
+                "total_power,power_low_freq,power_mid_freq,power_high_freq,"
+                "zero_crossing_rate,mean_crossing_rate,energy,autocorr_peak");
+        }
+        
+        // Statistics
+        sprintf(param_str, "%.6f", sp.GetMean());
+        recorder.addMetadata("Statistics", "mean", param_str);
+        sprintf(param_str, "%.6f", sp.GetStandardDeviation());
+        recorder.addMetadata("Statistics", "std_dev", param_str);
+        sprintf(param_str, "%.6f", sp.GetVariance());
+        recorder.addMetadata("Statistics", "variance", param_str);
+        
+        // Get absolute path of saved file
+        char abs_path[PATH_MAX];
+        if (realpath(save_filename, abs_path) != NULL) {
+            save_success = true;
+            save_error = false;
+            sprintf(save_message, "✓ Successfully saved!\n\nLocation:\n%s\n\nView with:\nh5dump %s", abs_path, save_filename);
+        } else {
+            // Fallback if realpath fails
+            char cwd[PATH_MAX];
+            if (getcwd(cwd, sizeof(cwd)) != NULL) {
+                save_success = true;
+                save_error = false;
+                sprintf(save_message, "✓ Successfully saved!\n\nLocation:\n%s/%s\n\nView with:\nh5dump %s", cwd, save_filename, save_filename);
+            } else {
+                save_success = true;
+                save_error = false;
+                sprintf(save_message, "✓ Successfully saved to %s\nView with: h5dump %s", save_filename, save_filename);
+            }
+        }
+        
+    } catch (const std::exception& e) {
+        save_success = false;
+        save_error = true;
+        sprintf(save_message, "✗ Error saving file: %s", e.what());
+    }
+}
+
+// Load signal from HDF5
+void LoadSignalFromHDF5() {
+    try {
+        H5File file(load_filename, H5F_ACC_RDONLY);
+        
+        // Clear previous data
+        loaded_signal.clear();
+        loaded_filtered.clear();
+        loaded_anomalies.clear();
+        loaded_fft_freq.clear();
+        loaded_fft_mag.clear();
+        
+        // Read metadata
+        char info_buffer[512] = "";
+        try {
+            Group session = file.openGroup("/Session");
+            DataSet timestamp_ds = session.openDataSet("timestamp");
+            StrType str_type = timestamp_ds.getStrType();
+            std::string timestamp_str;
+            timestamp_ds.read(timestamp_str, str_type);
+            sprintf(info_buffer, "Session: %s", timestamp_str.c_str());
+        } catch (...) {
+            sprintf(info_buffer, "Loaded from: %s", load_filename);
+        }
+        strcpy(loaded_info, info_buffer);
+        
+        // Read original signal
+        try {
+            DataSet dataset = file.openDataSet("/Signals/Raw/original_signal");
+            DataSpace dataspace = dataset.getSpace();
+            hsize_t dims[1];
+            dataspace.getSimpleExtentDims(dims);
+            
+            std::vector<float> temp_data(dims[0]);
+            dataset.read(temp_data.data(), PredType::NATIVE_FLOAT);
+            
+            loaded_signal.resize(dims[0]);
+            for (size_t i = 0; i < dims[0]; i++) {
+                loaded_signal[i] = temp_data[i];
+            }
+        } catch (...) {
+            // Signal not found
+        }
+        
+        // Read filtered signal
+        try {
+            DataSet dataset = file.openDataSet("/Signals/Processed/filtered_signal");
+            DataSpace dataspace = dataset.getSpace();
+            hsize_t dims[1];
+            dataspace.getSimpleExtentDims(dims);
+            
+            std::vector<float> temp_data(dims[0]);
+            dataset.read(temp_data.data(), PredType::NATIVE_FLOAT);
+            
+            loaded_filtered.resize(dims[0]);
+            for (size_t i = 0; i < dims[0]; i++) {
+                loaded_filtered[i] = temp_data[i];
+            }
+        } catch (...) {
+            // Filtered signal not found
+        }
+        
+        // Read anomalies
+        try {
+            DataSet dataset = file.openDataSet("/Anomalies/indices");
+            DataSpace dataspace = dataset.getSpace();
+            hsize_t dims[1];
+            dataspace.getSimpleExtentDims(dims);
+            
+            std::vector<float> temp_data(dims[0]);
+            dataset.read(temp_data.data(), PredType::NATIVE_FLOAT);
+            
+            loaded_anomalies.resize(dims[0]);
+            for (size_t i = 0; i < dims[0]; i++) {
+                loaded_anomalies[i] = (int)temp_data[i];
+            }
+        } catch (...) {
+            // Anomalies not found
+        }
+        
+        // Read FFT data
+        try {
+            DataSet freq_ds = file.openDataSet("/Analysis/FFT/frequencies");
+            DataSet mag_ds = file.openDataSet("/Analysis/FFT/magnitudes");
+            
+            DataSpace freq_space = freq_ds.getSpace();
+            hsize_t dims[1];
+            freq_space.getSimpleExtentDims(dims);
+            
+            std::vector<float> temp_freq(dims[0]);
+            std::vector<float> temp_mag(dims[0]);
+            freq_ds.read(temp_freq.data(), PredType::NATIVE_FLOAT);
+            mag_ds.read(temp_mag.data(), PredType::NATIVE_FLOAT);
+            
+            loaded_fft_freq.resize(dims[0]);
+            loaded_fft_mag.resize(dims[0]);
+            for (size_t i = 0; i < dims[0]; i++) {
+                loaded_fft_freq[i] = temp_freq[i];
+                loaded_fft_mag[i] = temp_mag[i];
+            }
+        } catch (...) {
+            // FFT data not found
+        }
+        
+        file.close();
+        
+        // Get absolute path
+        char abs_path[PATH_MAX];
+        if (realpath(load_filename, abs_path) != NULL) {
+            load_success = true;
+            load_error = false;
+            sprintf(load_message, "✓ Successfully loaded!\n\nFile:\n%s\n\n"
+                    "Original signal: %d samples\n"
+                    "Filtered signal: %d samples\n"
+                    "Anomalies: %d points\n"
+                    "FFT data: %d bins", 
+                    abs_path,
+                    (int)loaded_signal.size(),
+                    (int)loaded_filtered.size(),
+                    (int)loaded_anomalies.size(),
+                    (int)loaded_fft_freq.size());
+        } else {
+            load_success = true;
+            load_error = false;
+            sprintf(load_message, "✓ Successfully loaded %d samples!", (int)loaded_signal.size());
+        }
+        
+        show_loaded_data = true;
+        
+    } catch (const FileIException& e) {
+        load_success = false;
+        load_error = true;
+        sprintf(load_message, "✗ Error: Cannot open file '%s'\n\nMake sure the file exists.", load_filename);
+    } catch (const Exception& e) {
+        load_success = false;
+        load_error = true;
+        sprintf(load_message, "✗ HDF5 Error: %s", e.getDetailMsg().c_str());
+    } catch (const std::exception& e) {
+        load_success = false;
+        load_error = true;
+        sprintf(load_message, "✗ Error loading file: %s", e.what());
+    }
+}
+
 int main(int, char**) {
     // Initialize GLFW
     if (!glfwInit())
@@ -331,6 +643,36 @@ int main(int, char**) {
         ImGui::Text("Std Dev: %.4f", sp.GetStandardDeviation());
         ImGui::Text("RMS: %.4f", ml_features.rms);
         
+        // HDF5 Save button
+        ImGui::Spacing();
+        ImGui::Text("💾 Save to HDF5");
+        ImGui::Separator();
+        if (ImGui::Button("📁 Save Signal Recording", ImVec2(-1, 0))) {
+            show_save_dialog = true;
+        }
+        
+        // HDF5 Load button
+        ImGui::Spacing();
+        ImGui::Text("📂 Load from HDF5");
+        ImGui::Separator();
+        if (ImGui::Button("📥 Load Signal Recording", ImVec2(-1, 0))) {
+            show_load_dialog = true;
+        }
+        
+        if (show_loaded_data) {
+            ImGui::Spacing();
+            ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "✓ Loaded");
+            ImGui::Text("%s", loaded_info);
+            if (ImGui::Button("Clear Loaded Data", ImVec2(-1, 0))) {
+                show_loaded_data = false;
+                loaded_signal.clear();
+                loaded_filtered.clear();
+                loaded_anomalies.clear();
+                loaded_fft_freq.clear();
+                loaded_fft_mag.clear();
+            }
+        }
+        
         ImGui::EndChild();
         
         ImGui::SameLine();
@@ -425,9 +767,158 @@ int main(int, char**) {
             ImGui::EndChild();
         }
         
+        // Loaded signal visualization
+        if (show_loaded_data && !loaded_signal.empty()) {
+            ImGui::Separator();
+            ImGui::Text("📂 Loaded Signal Data");
+            
+            // Plot loaded signal
+            if (ImPlot::BeginPlot("Loaded Signal - Time Domain", ImVec2(-1, 300))) {
+                ImPlot::SetupAxes("Sample", "Amplitude");
+                
+                std::vector<double> x_vals(loaded_signal.size());
+                for (size_t i = 0; i < x_vals.size(); i++) x_vals[i] = i;
+                
+                ImPlot::PlotLine("Loaded Original", x_vals.data(), loaded_signal.data(), loaded_signal.size());
+                
+                if (!loaded_filtered.empty()) {
+                    ImPlot::PlotLine("Loaded Filtered", x_vals.data(), loaded_filtered.data(), loaded_filtered.size());
+                }
+                
+                if (!loaded_anomalies.empty()) {
+                    std::vector<double> anomaly_x, anomaly_y;
+                    for (int idx : loaded_anomalies) {
+                        if (idx < (int)loaded_signal.size()) {
+                            anomaly_x.push_back(idx);
+                            anomaly_y.push_back(loaded_signal[idx]);
+                        }
+                    }
+                    if (!anomaly_x.empty()) {
+                        ImPlot::PlotScatter("Loaded Anomalies", anomaly_x.data(), anomaly_y.data(), anomaly_x.size());
+                    }
+                }
+                
+                ImPlot::EndPlot();
+            }
+            
+            // Plot loaded FFT
+            if (!loaded_fft_freq.empty()) {
+                if (ImPlot::BeginPlot("Loaded FFT Spectrum", ImVec2(-1, 300))) {
+                    ImPlot::SetupAxes("Frequency (Hz)", "Magnitude");
+                    ImPlot::PlotLine("Loaded FFT", loaded_fft_freq.data(), loaded_fft_mag.data(), loaded_fft_freq.size());
+                    ImPlot::EndPlot();
+                }
+            }
+        }
+        
         ImGui::EndChild();
         
         ImGui::End();
+
+        // Save dialog
+        if (show_save_dialog) {
+            ImGui::OpenPopup("Save Signal to HDF5");
+        }
+        
+        ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        
+        if (ImGui::BeginPopupModal("Save Signal to HDF5", &show_save_dialog, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::Text("Save current signal data to HDF5 file format");
+            ImGui::Separator();
+            
+            ImGui::Text("Filename:");
+            ImGui::InputText("##filename", save_filename, sizeof(save_filename));
+            
+            ImGui::Text("Session Info:");
+            ImGui::InputText("##sessioninfo", session_info, sizeof(session_info));
+            
+            ImGui::Spacing();
+            ImGui::Text("This will save:");
+            ImGui::BulletText("Original and filtered signals");
+            ImGui::BulletText("Signal parameters and metadata");
+            ImGui::BulletText("Filter settings");
+            if (!anomaly_indices.empty()) {
+                ImGui::BulletText("Detected anomalies (%d points)", (int)anomaly_indices.size());
+            }
+            if (!fft_frequencies.empty()) {
+                ImGui::BulletText("FFT frequency spectrum");
+            }
+            if (show_ml_features) {
+                ImGui::BulletText("ML features (20 features)");
+            }
+            ImGui::BulletText("Statistical analysis");
+            
+            ImGui::Spacing();
+            
+            if (save_success) {
+                ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "%s", save_message);
+            } else if (save_error) {
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", save_message);
+            }
+            
+            ImGui::Spacing();
+            ImGui::Separator();
+            
+            if (ImGui::Button("Save", ImVec2(120, 0))) {
+                SaveSignalToHDF5();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+                show_save_dialog = false;
+                save_success = false;
+                save_error = false;
+            }
+            
+            ImGui::EndPopup();
+        }
+
+        // Load dialog
+        if (show_load_dialog) {
+            ImGui::OpenPopup("Load Signal from HDF5");
+        }
+        
+        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        
+        if (ImGui::BeginPopupModal("Load Signal from HDF5", &show_load_dialog, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::Text("Load previously saved signal data from HDF5 file");
+            ImGui::Separator();
+            
+            ImGui::Text("Filename:");
+            ImGui::InputText("##loadfilename", load_filename, sizeof(load_filename));
+            
+            ImGui::Spacing();
+            ImGui::Text("This will load:");
+            ImGui::BulletText("Original and filtered signals");
+            ImGui::BulletText("Signal metadata");
+            ImGui::BulletText("Anomaly detection results (if available)");
+            ImGui::BulletText("FFT spectrum data (if available)");
+            ImGui::Spacing();
+            ImGui::TextWrapped("💡 The loaded signal will be displayed below the current signal plots.");
+            
+            ImGui::Spacing();
+            
+            if (load_success) {
+                ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "%s", load_message);
+            } else if (load_error) {
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", load_message);
+            }
+            
+            ImGui::Spacing();
+            ImGui::Separator();
+            
+            if (ImGui::Button("Load", ImVec2(120, 0))) {
+                LoadSignalFromHDF5();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+                show_load_dialog = false;
+                load_success = false;
+                load_error = false;
+            }
+            
+            ImGui::EndPopup();
+        }
 
         // Rendering
         ImGui::Render();

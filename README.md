@@ -26,6 +26,7 @@ A comprehensive C++ library for real-time signal processing, featuring filtering
 - **ML/AI Feature Extraction**: Extract 21 comprehensive features for machine learning models (neural networks, SVM, etc.)
 - **Decimation and Interpolation**: Downsample, upsample, and resample signals for rate conversion
 - **Correlation Analysis**: Autocorrelation for periodicity detection, cross-correlation for signal alignment and time delay estimation
+- **Signal Recording (HDF5)**: Save signals and metadata to hierarchical HDF5 files for persistent storage and offline analysis
 
 ## Function Descriptions
 See comments in `SignalProcessing.h` for details about each public method.
@@ -46,6 +47,7 @@ Each functionality has a dedicated test file in the `test/` folder:
 - `test_ml_features.cpp`: ML/AI feature extraction for neural networks and SVM
 - `test_decimation.cpp`: decimation, interpolation, and resampling
 - `test_correlation.cpp`: autocorrelation and cross-correlation analysis
+- `test_signal_recorder.cpp`: HDF5 signal recording and metadata storage
 
 To build a test, run the corresponding script (from the `test/` folder):
 
@@ -63,6 +65,7 @@ To build a test, run the corresponding script (from the `test/` folder):
 ./build_ml_features.sh
 ./build_decimation.sh
 ./build_correlation.sh
+./build_signal_recorder.sh
 ```
 
 Or on Windows:
@@ -443,6 +446,252 @@ sp_current.FreeSpectrum(&current_spectrum);
 - Identify sources of vibration
 - Separate mechanical from electrical issues
 - Track degradation trends
+
+## Signal Recording with HDF5
+
+The `SignalRecorder` class provides persistent storage for signal data and metadata using the HDF5 file format. Perfect for:
+- **Data logging**: Store sensor readings from multiple channels
+- **Offline analysis**: Save signals for later processing and visualization
+- **Dataset creation**: Generate training data for machine learning models
+- **Audit trails**: Maintain records of measurements with metadata
+
+### Features
+- Hierarchical data organization (groups and datasets)
+- Metadata storage (device info, location, timestamps)
+- Multiple data channels support
+- Units and attributes for each dataset
+- Efficient storage for large time-series data
+
+### Requirements
+Install HDF5 development libraries:
+
+```bash
+# Ubuntu/Debian
+sudo apt install libhdf5-dev
+
+# Verify installation
+find /usr -name "H5Cpp.h"  # Should find /usr/include/hdf5/serial/H5Cpp.h
+```
+
+### Basic Usage
+
+```cpp
+#include "SignalRecorder.hpp"
+
+int main() {
+    // Create recorder and HDF5 file
+    SignalRecorder recorder("sensor_data.h5");
+    
+    // Add metadata
+    recorder.addMetadata("Info", "device", "Accelerometer XYZ-100");
+    recorder.addMetadata("Info", "location", "Turbine Bearing #3");
+    
+    // Record vibration data
+    std::vector<float> vibration_x = ReadSensorChannel(AXIS_X);
+    recorder.addFloatVector("Sensors/Vibration", "axis_x", vibration_x, "m/s²");
+    
+    // Record temperature
+    std::vector<float> temperature = ReadTemperatureSensor();
+    recorder.addFloatVector("Sensors/Temperature", "bearing_temp", temperature, "°C");
+    
+    // Save processed data
+    std::vector<float> filtered_signal = ApplyFilter(vibration_x);
+    recorder.addFloatVector("Processed/Filtered", "kalman_filtered", filtered_signal, "m/s²");
+    
+    return 0;  // File automatically closed
+}
+```
+
+### Hierarchical Organization
+
+Organize data in logical groups:
+
+```
+/sensor_data.h5
+├── Info/
+│   ├── device: "Accelerometer XYZ-100"
+│   └── location: "Turbine Bearing #3"
+├── Sensors/
+│   ├── Vibration/
+│   │   ├── axis_x (1000 samples, units: m/s²)
+│   │   ├── axis_y (1000 samples, units: m/s²)
+│   │   └── axis_z (1000 samples, units: m/s²)
+│   └── Temperature/
+│       └── bearing_temp (500 samples, units: °C)
+└── Processed/
+    ├── Filtered/
+    │   └── kalman_filtered (1000 samples, units: m/s²)
+    └── Features/
+        └── rms_values (12 samples, units: m/s²)
+```
+
+### Multi-Channel Recording
+
+```cpp
+SignalRecorder recorder("multi_channel.h5");
+
+// Record from multiple sensors
+const int NUM_CHANNELS = 3;
+const char* axes[] = {"axis_x", "axis_y", "axis_z"};
+
+for (int ch = 0; ch < NUM_CHANNELS; ++ch) {
+    std::vector<float> data = ReadAccelerometer(ch);
+    recorder.addFloatVector("RawData/Accelerometer", axes[ch], data, "m/s²");
+}
+
+// Save analysis results
+std::vector<float> fft_peaks = ComputeFFTPeaks(data);
+recorder.addFloatVector("Analysis/FFT", "dominant_frequencies", fft_peaks, "Hz");
+```
+
+### Machine Learning Dataset Creation
+
+```cpp
+SignalRecorder dataset("training_data.h5");
+
+// Store features for ML model
+dataset.addMetadata("Dataset", "class", "normal_operation");
+dataset.addMetadata("Dataset", "timestamp", GetCurrentTimestamp());
+
+// Extract and save features
+SignalProcessing sp;
+// ... add signal data to sp ...
+
+MLFeatureSet features = sp.ExtractMLFeatures();
+std::vector<float> feature_vector(21);
+feature_vector[0] = features.mean;
+feature_vector[1] = features.std_dev;
+feature_vector[2] = features.rms;
+// ... fill remaining features ...
+
+dataset.addFloatVector("Features", "statistical", feature_vector, "mixed");
+
+// Save labels
+std::vector<float> labels = {0.0};  // 0 = normal, 1 = fault
+dataset.addFloatVector("Labels", "class_label", labels, "categorical");
+```
+
+### Turbine Monitoring Example
+
+```cpp
+SignalRecorder log("turbine_monitoring.h5");
+
+// Session metadata
+log.addMetadata("Session", "turbine_id", "TRB-001");
+log.addMetadata("Session", "date", "2026-02-08");
+log.addMetadata("Session", "operator", "John Doe");
+
+const int NUM_BLADES = 12;
+const int SAMPLES_PER_BLADE = 50;
+
+// Record each blade's vibration signature
+for (int blade = 0; blade < NUM_BLADES; ++blade) {
+    std::vector<float> blade_signal = RecordBladePass(blade);
+    
+    char path[64], name[32];
+    sprintf(path, "Blades/Blade_%02d", blade + 1);
+    sprintf(name, "vibration");
+    
+    log.addFloatVector(path, name, blade_signal, "m/s²");
+    
+    // Calculate and save blade statistics
+    double rms = CalculateRMS(blade_signal);
+    std::vector<float> stats = {(float)rms};
+    log.addFloatVector(path, "rms", stats, "m/s²");
+}
+```
+
+### Compilation
+
+Include HDF5 headers and libraries when compiling:
+
+```bash
+g++ -std=c++11 \
+    -I/usr/include/hdf5/serial \
+    -o your_program your_program.cpp \
+    -L/usr/lib/x86_64-linux-gnu/hdf5/serial \
+    -lhdf5_cpp -lhdf5
+```
+
+### Viewing HDF5 Files
+
+Inspect recorded data with HDF5 tools:
+
+```bash
+# Install tools
+sudo apt install hdf5-tools
+
+# List file contents
+h5ls -r sensor_data.h5
+
+# Dump complete file structure
+h5dump sensor_data.h5
+
+# View specific dataset
+h5dump -d /Sensors/Vibration/axis_x sensor_data.h5
+```
+
+### Python Integration
+
+Read HDF5 files with Python for analysis and visualization:
+
+```python
+import h5py
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Open file
+with h5py.File('sensor_data.h5', 'r') as f:
+    # Read metadata
+    device = f['Info/device'][()]
+    print(f"Device: {device}")
+    
+    # Read signal data
+    vibration = f['Sensors/Vibration/axis_x'][:]
+    units = f['Sensors/Vibration/axis_x'].attrs['units']
+    
+    # Plot
+    plt.plot(vibration)
+    plt.ylabel(f'Vibration ({units})')
+    plt.xlabel('Sample')
+    plt.title(f'Sensor: {device}')
+    plt.show()
+```
+
+### API Reference
+
+**Constructor**
+```cpp
+SignalRecorder(const std::string& filename)
+```
+Creates new HDF5 file (overwrites if exists).
+
+**Methods**
+```cpp
+void addMetadata(const std::string& groupName, 
+                 const std::string& key, 
+                 const std::string& value)
+```
+Add string metadata to a group.
+
+```cpp
+void addFloatVector(const std::string& path,
+                    const std::string& datasetName,
+                    const std::vector<float>& data,
+                    const std::string& units = "")
+```
+Save float vector with optional units attribute. Creates nested groups automatically.
+
+**Note**: File is automatically closed when `SignalRecorder` object is destroyed.
+
+### Use Cases
+
+- **Long-term monitoring**: Record sensor data 24/7 for trend analysis
+- **Batch processing**: Save raw data and process later with different algorithms
+- **Benchmarking**: Compare performance of different filters and algorithms
+- **Calibration**: Store reference signals and baselines
+- **Documentation**: Maintain records with timestamps and metadata
+- **ML model training**: Generate labeled datasets from sensor recordings
 
 ## TODO
 Possible real-time signal processing operations to implement:
