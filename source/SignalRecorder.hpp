@@ -25,11 +25,22 @@ public:
     }
 
     void addMetadata(const std::string& groupName, const std::string& key, const std::string& value) {
-        Group group = file->createGroup("/" + groupName);
-        StrType strType(PredType::C_S1, H5T_VARIABLE);
-        DataSpace scalarSpace(H5S_SCALAR);
-        DataSet dataset = group.createDataSet(key, strType, scalarSpace);
-        dataset.write(value, strType);
+        H5::Exception::dontPrint();
+        try {
+            Group group;
+            try {
+                group = file->openGroup("/" + groupName);
+            } catch (...) {
+                group = file->createGroup("/" + groupName);
+            }
+            
+            StrType strType(PredType::C_S1, H5T_VARIABLE);
+            DataSpace scalarSpace(H5S_SCALAR);
+            DataSet dataset = group.createDataSet(key, strType, scalarSpace);
+            dataset.write(value, strType);
+        } catch (Exception &e) {
+            std::cerr << "Error adding metadata: " << e.getDetailMsg() << std::endl;
+        }
     }
 
     void addFloatVector(const std::string& path,
@@ -63,6 +74,9 @@ private:
 
     // Creează recursiv grupuri de forma "/Sensors/Vibrations"
     Group createGroupsRecursively(const std::string& path) {
+        // Disable HDF5 error messages for cleaner output
+        H5::Exception::dontPrint();
+        
         std::string currentPath;
         Group group = file->openGroup("/");
 
