@@ -7,6 +7,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Find OpenGL
 find_package(OpenGL REQUIRED)
 
+# Find HDF5 (C++ bindings)
+find_package(HDF5 REQUIRED COMPONENTS CXX)
+if(HDF5_FOUND)
+    message(STATUS "Found HDF5: ${HDF5_VERSION}")
+    message(STATUS "HDF5 include dirs: ${HDF5_INCLUDE_DIRS}")
+    message(STATUS "HDF5 libraries: ${HDF5_CXX_LIBRARIES}")
+endif()
+
 # Download and build GLFW automatically
 include(FetchContent)
 FetchContent_Declare(
@@ -29,6 +37,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/imgui
     ${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends
     ${CMAKE_CURRENT_SOURCE_DIR}/implot
+    ${HDF5_INCLUDE_DIRS}
 )
 
 # ImGui sources
@@ -66,6 +75,7 @@ target_link_libraries(imgui_demo
     OpenGL::GL
     glfw
     ${CMAKE_DL_LIBS}
+    ${HDF5_CXX_LIBRARIES}
 )
 
 # Platform-specific settings

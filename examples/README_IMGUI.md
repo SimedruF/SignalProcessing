@@ -43,6 +43,20 @@ Aplicație interactivă cu interfață grafică pentru demonstrarea funcționali
   - Frequency features (9)
   - Time domain features (4)
 
+### 💾 HDF5 Recording
+- **Save Signal Data**
+  - Export signals to HDF5 file format
+  - Save original and filtered signals
+  - Store all parameters and metadata
+  - Save anomaly detection results
+  - Export FFT spectrum data
+  - Save ML features for training datasets
+- **Metadata Support**
+  - Session timestamp and info
+  - Signal parameters (frequency, noise, sampling rate)
+  - Filter settings
+  - Analysis results
+
 ### 📊 Visualization
 - **Time Domain Plot**
   - Semnal original vs. filtrat
@@ -59,6 +73,7 @@ Aplicație interactivă cu interfață grafică pentru demonstrarea funcționali
 sudo apt-get update
 sudo apt-get install build-essential cmake git
 sudo apt-get install libglfw3-dev libgl1-mesa-dev
+sudo apt-get install libhdf5-dev  # For HDF5 recording support
 ```
 
 ### macOS
@@ -147,9 +162,17 @@ cmake --build .
    - View all 21 features in panel
    - Perfect for training ML models
 
+6. **Save Recording to HDF5**
+   - Click "📁 Save Signal Recording"
+   - Enter filename (e.g., `my_signal.h5`)
+   - Add session info/notes
+   - Click "💾 Save"
+   - View later with: `h5dump my_signal.h5`
+
 ### Example Scenarios
 
 #### ECG Analysis
+7. Save to HDF5 → Store for offline analysis
 ```
 1. Set Signal Type: "ECG Signal"
 2. Frequency: 1.2 Hz (72 BPM)
@@ -166,6 +189,7 @@ cmake --build .
 3. Apply Median Filter (window=5)
 4. Enable "Show Anomalies" (Z-Score, threshold=3.0)
 5. Compute FFT → See 50 Hz fundamental + harmonics
+7. Save session → Create dataset for predictive maintenance
 6. Extract ML Features → Check high-freq power for bearing wear
 ```
 
@@ -173,6 +197,22 @@ cmake --build .
 ```
 1. Generate noisy sine wave
 2. Enable Kalman Filter → observe smoothing
+5. Save both filtered versions for documentation
+```
+
+#### ML Dataset Creation
+```
+1. Generate various signal types with different noise levels
+2. Apply desired preprocessing filters
+3. Extract ML features for each configuration
+4. Save to HDF5 with descriptive session info
+5. Use saved files to train ML models in Python:
+   ```python
+   import h5py
+   with h5py.File('signal_recording.h5', 'r') as f:
+       features = f['Analysis/ML_Features/feature_vector'][:]
+       signal = f['Signals/Processed/filtered_signal'][:]
+   ```
 3. Disable Kalman, enable Median Filter → compare
 4. Enable Wavelet → see different behavior
 ```
