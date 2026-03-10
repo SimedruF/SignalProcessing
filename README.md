@@ -24,7 +24,8 @@ A comprehensive C++ library for real-time signal processing, featuring filtering
 - **Frequency Band Analysis**: Power analysis in specific frequency ranges
 - **Frequency-based Anomaly Detection**: Compare frequency spectra to detect abnormal patterns
 - **ML/AI Feature Extraction**: Extract 21 comprehensive features for machine learning models (neural networks, SVM, etc.)
-- **Downstream ML/AI Integration**: Dataset management, batch processing, rolling windows, CSV export, training statistics, and normalization for seamless integration with TensorFlow, PyTorch, scikit-learn, and other ML frameworks
+- **Downstream ML/AI Integration**: Dataset management, batch processing, rolling windows, CSV/HDF5 export, training statistics, and normalization for seamless integration with TensorFlow, PyTorch, scikit-learn, and other ML frameworks
+- **HDF5 Export (Optional)**: Save ML datasets, training statistics, and signals to HDF5 format for integration with Python ML frameworks (requires HDF5 library)
 - **Decimation and Interpolation**: Downsample, upsample, and resample signals for rate conversion
 - **Correlation Analysis**: Autocorrelation for periodicity detection, cross-correlation for signal alignment and time delay estimation
 - **Signal Recording (HDF5)**: Save signals and metadata to hierarchical HDF5 files for persistent storage and offline analysis
@@ -47,6 +48,7 @@ Each functionality has a dedicated test file in the `test/` folder:
 - `test_frequency_analysis.cpp`: FFT analysis, harmonic detection, frequency-based anomaly detection
 - `test_ml_features.cpp`: ML/AI feature extraction for neural networks and SVM
 - `test_ml_downstream.cpp`: Downstream ML/AI integration - dataset management, batch processing, training statistics, CSV export
+- `test_ml_h5export.cpp`: HDF5 export for ML/AI datasets (requires USE_HDF5 flag and HDF5 library)
 - `test_decimation.cpp`: decimation, interpolation, and resampling
 - `test_correlation.cpp`: autocorrelation and cross-correlation analysis
 - `test_signal_recorder.cpp`: HDF5 signal recording and metadata storage

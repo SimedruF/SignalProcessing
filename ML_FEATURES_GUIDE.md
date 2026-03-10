@@ -499,8 +499,14 @@ SignalProcessing::ComputeTrainingStats(&training_set, &stats);
 // 3. Normalizează dataset
 SignalProcessing::NormalizeDataset(&training_set, &stats);
 
-// 4. Exportă pentru training extern
+// 4. Exportă pentru training extern (CSV sau HDF5)
 SignalProcessing::ExportDatasetToCSV(&training_set, "ecg_train.csv", true);
+
+// Opțional: Export HDF5 (dacă ai biblioteca instalată și -DUSE_HDF5)
+SignalProcessing::ExportDatasetToH5(&training_set, "ecg_train.h5", 
+                                     true, "/Medical/ECG");
+SignalProcessing::ExportTrainingStatsToH5(&stats, "ecg_params.h5",
+                                          "/Medical/Normalization");
 
 // 5. Training în Python (TensorFlow/Keras)
 // ... antrenează modelul folosind CSV-ul exportat ...
@@ -548,8 +554,10 @@ Test demonstrează:
 ## See Also
 
 - `ANOMALY_DETECTION_GUIDE.md` - Anomaly detection methods
+- `HDF5_EXPORT_GUIDE.md` - HDF5 export for ML/AI datasets (optional feature)
 - `test/test_ml_features.cpp` - Feature extraction examples
 - `test/test_ml_downstream.cpp` - Complete downstream ML/AI integration (datasets, batch processing, CSV export)
+- `test/test_ml_h5export.cpp` - HDF5 export examples (requires HDF5 library)
 - `examples/example_complete.cpp` - ECG processing workflow
 
 ## Framework Integration Resources

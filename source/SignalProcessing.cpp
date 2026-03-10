@@ -1,4 +1,7 @@
 #include "SignalProcessing.h"
+#ifdef USE_HDF5
+    #include "SignalRecorder.hpp"
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
@@ -2670,6 +2673,248 @@ int SignalProcessing::BatchExtractFeatures(double **signals, int *signal_sizes, 
     
     return num_processed;
 }
+
+// ========== HDF5 EXPORT FOR ML/AI IMPLEMENTATION ==========
+
+#ifdef USE_HDF5
+// Full HDF5 implementation when library is available
+
+/// @brief Exports ML dataset to HDF5 file
+/// @param dataset Dataset to export
+/// @param filename Output HDF5 filename
+/// @param include_labels Include labels dataset
+/// @param path HDF5 group path
+/// @return true if successful
+bool SignalProcessing::ExportDatasetToH5(MLDataset *dataset, const char *filename, 
+                                        bool include_labels, const char *path)
+{
+    if (dataset == nullptr || filename == nullptr || dataset->num_samples == 0)
+    {
+        return false;
+    }
+    
+    try
+    {
+        SignalRecorder recorder(filename);
+        
+        // Prepare feature names
+        const char* feature_names[21] = {
+            "mean", "std_dev", "variance", "skewness", "kurtosis", 
+            "rms", "peak_to_peak", "crest_factor",
+            "dominant_freq", "spectral_centroid", "spectral_spread", "spectral_entropy",
+            "total_power", "power_low_freq", "power_mid_freq", "power_high_freq",
+            "zero_crossing_rate", "mean_crossing_rate", "energy", "autocorr_peak"
+        };
+        
+        // Create feature matrix (21 x num_samples)
+        std::vector<std::vector<double>> feature_matrix(21);
+        for (int f = 0; f < 21; f++)
+        {
+            feature_matrix[f].resize(dataset->num_samples);
+        }
+        
+        // Fill feature matrix
+        double temp_array[21];
+        for (int i = 0; i < dataset->num_samples; i++)
+        {
+            SignalProcessing::ExportFeaturesToArray(&dataset->samples[i], temp_array);
+            for (int f = 0; f < 21; f++)
+            {
+                feature_matrix[f][i] = temp_array[f];
+            }
+        }
+        
+        // Save each feature as a separate dataset
+        for (int f = 0; f < 21; f++)
+        {
+            recorder.addDoubleVector(path, feature_names[f], feature_matrix[f]);
+        }
+        
+        // Save labels if present
+        if (include_labels && dataset->has_labels && dataset->labels != nullptr)
+        {
+            std::vector<double> labels_double(dataset->num_samples);
+            for (int i = 0; i < dataset->num_samples; i++)
+            {
+                labels_double[i] = (double)dataset->labels[i];
+            }
+            recorder.addDoubleVector(path, "labels", labels_double);
+        }
+        
+        // Add metadata
+        char metadata[256];
+        sprintf(metadata, "%d", dataset->num_samples);
+        recorder.addMetadata(path, "num_samples", metadata);
+        sprintf(metadata, "%d", 21);
+        recorder.addMetadata(path, "num_features", metadata);
+        sprintf(metadata, "%s", dataset->has_labels ? "true" : "false");
+        recorder.addMetadata(path, "has_labels", metadata);
+        
+        // Add timestamp
+        time_t now = time(nullptr);
+        char timestamp[256];
+        strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", localtime(&now));
+        recorder.addMetadata(path, "export_timestamp", timestamp);
+        
+        return true;
+    }
+    catch (...)
+    {
+        return false;
+    }
+}
+
+/// @brief Exports training statistics to HDF5
+/// @param stats Training statistics
+/// @param filename Output HDF5 filename
+/// @param path HDF5 group path
+/// @return true if successful
+bool SignalProcessing::ExportTrainingStatsToH5(MLTrainingStats *stats, const char *filename,
+                                              const char *path)
+{
+    if (stats == nullptr || filename == nullptr)
+    {
+        return false;
+    }
+    
+    try
+    {
+        SignalRecorder recorder(filename);
+        
+        // Convert arrays to vectors
+        std::vector<double> mean_vec(stats->mean_values, stats->mean_values + 21);
+        std::vector<double> std_vec(stats->std_values, stats->std_values + 21);
+        std::vector<double> min_vec(stats->min_values, stats->min_values + 21);
+        std::vector<double> max_vec(stats->max_values, stats->max_values + 21);
+        
+        // Save statistics
+        recorder.addDoubleVector(path, "mean_values", mean_vec);
+        recorder.addDoubleVector(path, "std_values", std_vec);
+        recorder.addDoubleVector(path, "min_values", min_vec);
+        recorder.addDoubleVector(path, "max_values", max_vec);
+        
+        // Add metadata
+        char metadata[256];
+        sprintf(metadata, "%d", stats->num_samples);
+        recorder.addMetadata(path, "num_training_samples", metadata);
+        sprintf(metadata, "%d", 21);
+        recorder.addMetadata(path, "num_features", metadata);
+        
+        // Add timestamp
+        time_t now = time(nullptr);
+        char timestamp[256];
+        strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", localtime(&now));
+        recorder.addMetadata(path, "creation_timestamp", timestamp);
+        
+        return true;
+    }
+    catch (...)
+    {
+        return false;
+    }
+}
+
+/// @brief Exports feature vector and optionally raw signal to HDF5
+/// @param filename Output HDF5 filename
+/// @param features Feature vector to export
+/// @param path HDF5 group path
+/// @param save_raw_signal If true, also saves raw signal
+/// @return true if successful
+bool SignalProcessing::ExportMLFeaturesToH5(const char *filename, MLFeatureVector *features,
+                                           const char *path, bool save_raw_signal)
+{
+    if (filename == nullptr || features == nullptr)
+    {
+        return false;
+    }
+    
+    try
+    {
+        SignalRecorder recorder(filename);
+        
+        // Export features to array
+        double feature_array[21];
+        SignalProcessing::ExportFeaturesToArray(features, feature_array);
+        
+        // Create feature vector
+        std::vector<double> feature_vec(feature_array, feature_array + 21);
+        
+        // Save features
+        recorder.addDoubleVector(path, "features", feature_vec);
+        
+        // Save raw signal if requested
+        if (save_raw_signal && this->index > 0)
+        {
+            std::vector<double> signal_vec(this->SignalVector, 
+                                          this->SignalVector + this->index);
+            recorder.addDoubleVector(path, "raw_signal", signal_vec, "signal_units");
+            
+            char metadata[256];
+            sprintf(metadata, "%d", this->index);
+            recorder.addMetadata(path, "num_samples", metadata);
+        }
+        
+        // Add feature names as metadata
+        const char* feature_names[21] = {
+            "mean", "std_dev", "variance", "skewness", "kurtosis", 
+            "rms", "peak_to_peak", "crest_factor",
+            "dominant_freq", "spectral_centroid", "spectral_spread", "spectral_entropy",
+            "total_power", "power_low_freq", "power_mid_freq", "power_high_freq",
+            "zero_crossing_rate", "mean_crossing_rate", "energy", "autocorr_peak"
+        };
+        
+        // Save feature names as individual metadata entries
+        for (int i = 0; i < 21; i++)
+        {
+            char key[64];
+            sprintf(key, "feature_%d_name", i);
+            recorder.addMetadata(path, key, feature_names[i]);
+        }
+        
+        // Add timestamp
+        time_t now = time(nullptr);
+        char timestamp[256];
+        strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", localtime(&now));
+        recorder.addMetadata(path, "export_timestamp", timestamp);
+        
+        return true;
+    }
+    catch (...)
+    {
+        return false;
+    }
+}
+
+#else // USE_HDF5 not defined - provide stub implementations
+
+/// @brief Stub implementation when HDF5 is not available
+bool SignalProcessing::ExportDatasetToH5(MLDataset *dataset, const char *filename, 
+                                        bool include_labels, const char *path)
+{
+    (void)dataset; (void)filename; (void)include_labels; (void)path;
+    // HDF5 support not compiled in - define USE_HDF5 and link with HDF5 library
+    return false;
+}
+
+/// @brief Stub implementation when HDF5 is not available
+bool SignalProcessing::ExportTrainingStatsToH5(MLTrainingStats *stats, const char *filename,
+                                              const char *path)
+{
+    (void)stats; (void)filename; (void)path;
+    // HDF5 support not compiled in - define USE_HDF5 and link with HDF5 library
+    return false;
+}
+
+/// @brief Stub  implementation when HDF5 is not available
+bool SignalProcessing::ExportMLFeaturesToH5(const char *filename, MLFeatureVector *features,
+                                           const char *path, bool save_raw_signal)
+{
+    (void)filename; (void)features; (void)path; (void)save_raw_signal;
+    // HDF5 support not compiled in - define USE_HDF5 and link with HDF5 library
+    return false;
+}
+
+#endif // USE_HDF5
 
 // ========== DECIMATION AND INTERPOLATION IMPLEMENTATION ==========
 

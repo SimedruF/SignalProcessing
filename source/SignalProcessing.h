@@ -6,6 +6,12 @@
 #define MAX_INDX 12
 #include <time.h>
 #include <math.h>
+
+// Forward declaration for HDF5 integration (optional)
+// Define USE_HDF5 to enable HDF5 export functionality
+// If USE_HDF5 is not defined, HDF5 functions will still be declared but will return false
+class SignalRecorder;
+
 // --------------------------------------------------------
 // STRUCT prob_dist_item
 // --------------------------------------------------------
@@ -740,6 +746,61 @@ public:
      */
     static int BatchExtractFeatures(double **signals, int *signal_sizes, int num_signals,
                                    double sampling_rate, MLDataset *dataset);
+
+    // ========== HDF5 EXPORT FOR ML/AI (Optional - requires HDF5 library) ==========
+    // Note: These functions are always declared but implementation requires USE_HDF5 to be defined
+    // If USE_HDF5 is not defined, these functions will return false
+    
+    /**
+     * @brief Exports ML dataset to HDF5 file using SignalRecorder
+     * @param dataset Dataset to export
+     * @param filename Output HDF5 filename
+     * @param include_labels If true, includes label dataset
+     * @param path HDF5 group path (e.g., "/ML/Training")
+     * @return true if successful, false otherwise
+     * 
+     * HDF5 format structure:
+     * - /path/features (21 x N matrix) - All features
+     * - /path/labels (N vector) - Labels (if include_labels=true)
+     * - /path/feature_names (21 strings) - Feature names
+     * - Attributes: num_samples, num_features, has_labels
+     * 
+     * Compatible with:
+     * - TensorFlow tf.data from HDF5
+     * - PyTorch torch.utils.data with h5py
+     * - Keras load from HDF5
+     * - MATLAB h5read()
+     */
+    static bool ExportDatasetToH5(MLDataset *dataset, const char *filename, 
+                                  bool include_labels = true, 
+                                  const char *path = "/ML/Dataset");
+    
+    /**
+     * @brief Exports training statistics to HDF5 file
+     * @param stats Training statistics to export
+     * @param filename Output HDF5 filename
+     * @param path HDF5 group path
+     * @return true if successful, false otherwise
+     * 
+     * Saves mean, std, min, max for each feature (21 features)
+     * Use this to store normalization parameters with your trained model
+     */
+    static bool ExportTrainingStatsToH5(MLTrainingStats *stats, const char *filename,
+                                       const char *path = "/ML/TrainingStats");
+    
+    /**
+     * @brief Exports feature vector and raw signal to HDF5
+     * @param filename Output HDF5 filename
+     * @param features Feature vector to export
+     * @param path HDF5 group path (e.g., "/Signals/ECG_001")
+     * @param save_raw_signal If true, also saves raw signal data
+     * @return true if successful, false otherwise
+     * 
+     * Useful for debugging and visualization - saves both features and original signal
+     */
+    bool ExportMLFeaturesToH5(const char *filename, MLFeatureVector *features,
+                              const char *path = "/Signal", 
+                              bool save_raw_signal = true);
 
     // ========== DECIMATION AND INTERPOLATION ==========
     
