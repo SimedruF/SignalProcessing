@@ -116,6 +116,30 @@ typedef struct MLFeatureVector
     int num_features;
 } MLFeatureVector;
 
+// --------------------------------------------------------
+// STRUCT MLDataset - Batch dataset for ML training/inference
+// --------------------------------------------------------
+typedef struct MLDataset
+{
+    MLFeatureVector *samples;   // Array of feature vectors
+    int *labels;                // Optional labels for supervised learning
+    int num_samples;            // Number of samples in dataset
+    int capacity;               // Allocated capacity
+    bool has_labels;            // Whether labels are present
+} MLDataset;
+
+// --------------------------------------------------------
+// STRUCT MLTrainingStats - Statistics for feature normalization
+// --------------------------------------------------------
+typedef struct MLTrainingStats
+{
+    double mean_values[21];     // Mean of each feature across training set
+    double std_values[21];      // Standard deviation of each feature
+    double min_values[21];      // Minimum value of each feature
+    double max_values[21];      // Maximum value of each feature
+    int num_samples;            // Number of samples used to compute statistics
+} MLTrainingStats;
+
 class SignalProcessing{
 public:
     /**
@@ -618,7 +642,7 @@ public:
      * Exports in order: statistical (8) → frequency (9) → time domain (4)
      * Compatible with TensorFlow, PyTorch, scikit-learn format requirements
      */
-    int ExportFeaturesToArray(MLFeatureVector *features, double *output_array);
+    static int ExportFeaturesToArray(MLFeatureVector *features, double *output_array);
     
     /**
      * @brief Normalizes feature vector for ML input (z-score normalization)
@@ -629,7 +653,93 @@ public:
      * Apply this before feeding to neural networks for better convergence
      * Compute mean_values and std_values from your training dataset
      */
-    void NormalizeMLFeatures(MLFeatureVector *features, double *mean_values, double *std_values);
+    static void NormalizeMLFeatures(MLFeatureVector *features, double *mean_values, double *std_values);
+
+    // ========== DOWNSTREAM ML/AI INTEGRATION ==========
+    
+    /**
+     * @brief Creates an empty ML dataset with specified capacity
+     * @param capacity Maximum number of samples to store
+     * @param with_labels If true, allocates memory for labels (supervised learning)
+     * @param dataset Output dataset structure
+     * @return true if successful, false otherwise
+     * 
+     * Use this to create batch datasets for training or inference
+     */
+    static bool CreateMLDataset(int capacity, bool with_labels, MLDataset *dataset);
+    
+    /**
+     * @brief Frees memory allocated for ML dataset
+     * @param dataset Dataset to free
+     */
+    static void FreeMLDataset(MLDataset *dataset);
+    
+    /**
+     * @brief Adds a feature vector to the dataset
+     * @param dataset Dataset to add to
+     * @param features Feature vector to add
+     * @param label Optional label for supervised learning (-1 if no label)
+     * @return true if successful, false if dataset is full
+     */
+    static bool AddFeaturesToDataset(MLDataset *dataset, MLFeatureVector *features, int label = -1);
+    
+    /**
+     * @brief Computes training statistics from a dataset
+     * @param dataset Dataset to analyze
+     * @param stats Output statistics (mean, std, min, max for each feature)
+     * @return true if successful, false otherwise
+     * 
+     * Use these statistics to normalize future data with NormalizeMLFeatures()
+     */
+    static bool ComputeTrainingStats(MLDataset *dataset, MLTrainingStats *stats);
+    
+    /**
+     * @brief Normalizes all samples in a dataset using training statistics
+     * @param dataset Dataset to normalize (modified in place)
+     * @param stats Training statistics to use for normalization
+     * @return true if successful, false otherwise
+     */
+    static bool NormalizeDataset(MLDataset *dataset, MLTrainingStats *stats);
+    
+    /**
+     * @brief Exports dataset to CSV file for external ML frameworks
+     * @param dataset Dataset to export
+     * @param filename Output CSV filename
+     * @param include_labels If true, includes label column (for supervised learning)
+     * @return true if successful, false otherwise
+     * 
+     * CSV format: feature1,feature2,...,feature21[,label]
+     * Compatible with Python pandas, scikit-learn, TensorFlow data loaders
+     */
+    static bool ExportDatasetToCSV(MLDataset *dataset, const char *filename, bool include_labels = true);
+    
+    /**
+     * @brief Extracts features using rolling window approach
+     * @param window_size Size of each window
+     * @param step_size Step between windows (overlap = window_size - step_size)
+     * @param sampling_rate Sampling rate in Hz
+     * @param dataset Output dataset containing features from each window
+     * @return Number of windows processed
+     * 
+     * Perfect for time series analysis and streaming data processing
+     * Example: window_size=100, step_size=50 creates 50% overlap
+     */
+    int ExtractMLFeaturesRollingWindow(int window_size, int step_size, 
+                                       double sampling_rate, MLDataset *dataset);
+    
+    /**
+     * @brief Batch prediction interface - extract features from multiple signals
+     * @param signals Array of signal arrays
+     * @param signal_sizes Array of sizes for each signal
+     * @param num_signals Number of signals to process
+     * @param sampling_rate Sampling rate in Hz
+     * @param dataset Output dataset with features from all signals
+     * @return Number of signals successfully processed
+     * 
+     * Useful for batch inference on multiple sensor readings
+     */
+    static int BatchExtractFeatures(double **signals, int *signal_sizes, int num_signals,
+                                   double sampling_rate, MLDataset *dataset);
 
     // ========== DECIMATION AND INTERPOLATION ==========
     

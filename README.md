@@ -24,6 +24,7 @@ A comprehensive C++ library for real-time signal processing, featuring filtering
 - **Frequency Band Analysis**: Power analysis in specific frequency ranges
 - **Frequency-based Anomaly Detection**: Compare frequency spectra to detect abnormal patterns
 - **ML/AI Feature Extraction**: Extract 21 comprehensive features for machine learning models (neural networks, SVM, etc.)
+- **Downstream ML/AI Integration**: Dataset management, batch processing, rolling windows, CSV export, training statistics, and normalization for seamless integration with TensorFlow, PyTorch, scikit-learn, and other ML frameworks
 - **Decimation and Interpolation**: Downsample, upsample, and resample signals for rate conversion
 - **Correlation Analysis**: Autocorrelation for periodicity detection, cross-correlation for signal alignment and time delay estimation
 
@@ -44,6 +45,7 @@ Each functionality has a dedicated test file in the `test/` folder:
 - `test_turbine_anomaly.cpp`: turbine vibration monitoring and blade anomaly detection
 - `test_frequency_analysis.cpp`: FFT analysis, harmonic detection, frequency-based anomaly detection
 - `test_ml_features.cpp`: ML/AI feature extraction for neural networks and SVM
+- `test_ml_downstream.cpp`: Downstream ML/AI integration - dataset management, batch processing, training statistics, CSV export
 - `test_decimation.cpp`: decimation, interpolation, and resampling
 - `test_correlation.cpp`: autocorrelation and cross-correlation analysis
 
@@ -60,6 +62,7 @@ To build a test, run the corresponding script (from the `test/` folder):
 ./build_denoising.sh
 ./build_turbine_anomaly.sh
 ./build_frequency_analysis.sh
+./build_ml_downstream.sh
 ./build_ml_features.sh
 ./build_decimation.sh
 ./build_correlation.sh
@@ -70,6 +73,7 @@ Or on Windows:
 build_denoising.bat
 build_turbine_anomaly.bat
 build_frequency_analysis.bat
+build_ml_downstream.bat
 build_ml_features.bat
 build_decimation.bat
 build_correlation.bat
@@ -459,5 +463,5 @@ Possible real-time signal processing operations to implement:
 - Trend or anomaly detection ✓ (implemented: Z-Score, IQR, MAD, periodic, sudden change detection, frequency-based)
 - Adaptive filters (LMS, RLS) – they adjust their coefficients based on the signal in order to track time-varying changes.
 - Notch filters – remove a very narrow frequency component (e.g., 50/60 Hz from the power line).
-- Feature extraction – extracting numerical indicators (features) for automatic classification or diagnosis. ✓ (segment-based statistics, frequency spectrum features implemented)
+- Feature extraction – extracting numerical indicators (features) for automatic classificati ✓ (dataset management, batch processing, rolling windows, training statistics, CSV export, seamless integration with TensorFlow/PyTorch/scikit-learn implemented)on or diagnosis. ✓ (segment-based statistics, frequency spectrum features implemented)
 - Downstream ML/AI – using the preprocessed signals as input for neural networks, SVMs, etc.

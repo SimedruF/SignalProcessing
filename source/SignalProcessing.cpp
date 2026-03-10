@@ -2293,7 +2293,7 @@ void SignalProcessing::NormalizeMLFeatures(MLFeatureVector *features,
     }
     
     double temp_array[21];
-    this->ExportFeaturesToArray(features, temp_array);
+    SignalProcessing::ExportFeaturesToArray(features, temp_array);
     
     // Apply z-score normalization: (x - mean) / std
     for (int i = 0; i < 21; i++)
@@ -2328,6 +2328,347 @@ void SignalProcessing::NormalizeMLFeatures(MLFeatureVector *features,
     features->mean_crossing_rate = temp_array[idx++];
     features->energy = temp_array[idx++];
     features->autocorr_peak = temp_array[idx++];
+}
+
+// ========== DOWNSTREAM ML/AI INTEGRATION IMPLEMENTATION ==========
+
+/// @brief Creates an empty ML dataset
+/// @param capacity Maximum number of samples
+/// @param with_labels Allocate memory for labels
+/// @param dataset Output dataset
+/// @return true if successful
+bool SignalProcessing::CreateMLDataset(int capacity, bool with_labels, MLDataset *dataset)
+{
+    if (dataset == nullptr || capacity <= 0)
+    {
+        return false;
+    }
+    
+    dataset->samples = new MLFeatureVector[capacity];
+    if (dataset->samples == nullptr)
+    {
+        return false;
+    }
+    
+    if (with_labels)
+    {
+        dataset->labels = new int[capacity];
+        if (dataset->labels == nullptr)
+        {
+            delete[] dataset->samples;
+            return false;
+        }
+        dataset->has_labels = true;
+    }
+    else
+    {
+        dataset->labels = nullptr;
+        dataset->has_labels = false;
+    }
+    
+    dataset->num_samples = 0;
+    dataset->capacity = capacity;
+    
+    return true;
+}
+
+/// @brief Frees ML dataset memory
+/// @param dataset Dataset to free
+void SignalProcessing::FreeMLDataset(MLDataset *dataset)
+{
+    if (dataset == nullptr)
+    {
+        return;
+    }
+    
+    if (dataset->samples != nullptr)
+    {
+        delete[] dataset->samples;
+        dataset->samples = nullptr;
+    }
+    
+    if (dataset->labels != nullptr)
+    {
+        delete[] dataset->labels;
+        dataset->labels = nullptr;
+    }
+    
+    dataset->num_samples = 0;
+    dataset->capacity = 0;
+    dataset->has_labels = false;
+}
+
+/// @brief Adds feature vector to dataset
+/// @param dataset Dataset to add to
+/// @param features Features to add
+/// @param label Optional label
+/// @return true if successful
+bool SignalProcessing::AddFeaturesToDataset(MLDataset *dataset, MLFeatureVector *features, int label)
+{
+    if (dataset == nullptr || features == nullptr || dataset->samples == nullptr)
+    {
+        return false;
+    }
+    
+    if (dataset->num_samples >= dataset->capacity)
+    {
+        return false;  // Dataset is full
+    }
+    
+    // Copy feature vector
+    dataset->samples[dataset->num_samples] = *features;
+    
+    // Add label if present
+    if (dataset->has_labels && dataset->labels != nullptr)
+    {
+        dataset->labels[dataset->num_samples] = label;
+    }
+    
+    dataset->num_samples++;
+    return true;
+}
+
+/// @brief Computes training statistics from dataset
+/// @param dataset Dataset to analyze
+/// @param stats Output statistics
+/// @return true if successful
+bool SignalProcessing::ComputeTrainingStats(MLDataset *dataset, MLTrainingStats *stats)
+{
+    if (dataset == nullptr || stats == nullptr || dataset->num_samples == 0)
+    {
+        return false;
+    }
+    
+    double temp_array[21];
+    
+    // Initialize accumulators
+    for (int f = 0; f < 21; f++)
+    {
+        stats->mean_values[f] = 0.0;
+        stats->min_values[f] = 1e100;
+        stats->max_values[f] = -1e100;
+    }
+    
+    // First pass: compute mean, min, max
+    for (int i = 0; i < dataset->num_samples; i++)
+    {
+        SignalProcessing::ExportFeaturesToArray(&dataset->samples[i], temp_array);
+        
+        for (int f = 0; f < 21; f++)
+        {
+            stats->mean_values[f] += temp_array[f];
+            if (temp_array[f] < stats->min_values[f])
+            {
+                stats->min_values[f] = temp_array[f];
+            }
+            if (temp_array[f] > stats->max_values[f])
+            {
+                stats->max_values[f] = temp_array[f];
+            }
+        }
+    }
+    
+    // Compute mean
+    for (int f = 0; f < 21; f++)
+    {
+        stats->mean_values[f] /= dataset->num_samples;
+        stats->std_values[f] = 0.0;
+    }
+    
+    // Second pass: compute standard deviation
+    for (int i = 0; i < dataset->num_samples; i++)
+    {
+        SignalProcessing::ExportFeaturesToArray(&dataset->samples[i], temp_array);
+        
+        for (int f = 0; f < 21; f++)
+        {
+            double diff = temp_array[f] - stats->mean_values[f];
+            stats->std_values[f] += diff * diff;
+        }
+    }
+    
+    // Finalize standard deviation
+    for (int f = 0; f < 21; f++)
+    {
+        stats->std_values[f] = sqrt(stats->std_values[f] / dataset->num_samples);
+        
+        // Prevent division by zero in normalization
+        if (stats->std_values[f] < 1e-10)
+        {
+            stats->std_values[f] = 1.0;
+        }
+    }
+    
+    stats->num_samples = dataset->num_samples;
+    return true;
+}
+
+/// @brief Normalizes all samples in dataset
+/// @param dataset Dataset to normalize
+/// @param stats Training statistics
+/// @return true if successful
+bool SignalProcessing::NormalizeDataset(MLDataset *dataset, MLTrainingStats *stats)
+{
+    if (dataset == nullptr || stats == nullptr || dataset->num_samples == 0)
+    {
+        return false;
+    }
+    
+    // Normalize each sample
+    for (int i = 0; i < dataset->num_samples; i++)
+    {
+        SignalProcessing::NormalizeMLFeatures(&dataset->samples[i], stats->mean_values, stats->std_values);
+    }
+    
+    return true;
+}
+
+/// @brief Exports dataset to CSV file
+/// @param dataset Dataset to export
+/// @param filename Output filename
+/// @param include_labels Include label column
+/// @return true if successful
+bool SignalProcessing::ExportDatasetToCSV(MLDataset *dataset, const char *filename, bool include_labels)
+{
+    if (dataset == nullptr || filename == nullptr || dataset->num_samples == 0)
+    {
+        return false;
+    }
+    
+    FILE *fp = fopen(filename, "w");
+    if (fp == nullptr)
+    {
+        return false;
+    }
+    
+    // Write header
+    fprintf(fp, "mean,std_dev,variance,skewness,kurtosis,rms,peak_to_peak,crest_factor,");
+    fprintf(fp, "dominant_freq,spectral_centroid,spectral_spread,spectral_entropy,");
+    fprintf(fp, "total_power,power_low,power_mid,power_high,");
+    fprintf(fp, "zero_crossing_rate,mean_crossing_rate,energy,autocorr_peak");
+    
+    if (include_labels && dataset->has_labels)
+    {
+        fprintf(fp, ",label");
+    }
+    fprintf(fp, "\n");
+    
+    // Write data
+    double temp_array[21];
+    for (int i = 0; i < dataset->num_samples; i++)
+    {
+        SignalProcessing::ExportFeaturesToArray(&dataset->samples[i], temp_array);
+        
+        for (int f = 0; f < 21; f++)
+        {
+            fprintf(fp, "%.6f", temp_array[f]);
+            if (f < 20)
+            {
+                fprintf(fp, ",");
+            }
+        }
+        
+        if (include_labels && dataset->has_labels)
+        {
+            fprintf(fp, ",%d", dataset->labels[i]);
+        }
+        fprintf(fp, "\n");
+    }
+    
+    fclose(fp);
+    return true;
+}
+
+/// @brief Extracts features using rolling window
+/// @param window_size Size of each window
+/// @param step_size Step between windows
+/// @param sampling_rate Sampling rate in Hz
+/// @param dataset Output dataset
+/// @return Number of windows processed
+int SignalProcessing::ExtractMLFeaturesRollingWindow(int window_size, int step_size, 
+                                                     double sampling_rate, MLDataset *dataset)
+{
+    if (dataset == nullptr || window_size <= 0 || step_size <= 0)
+    {
+        return 0;
+    }
+    
+    if (window_size > this->index)
+    {
+        return 0;  // Not enough data
+    }
+    
+    int num_windows = 0;
+    int start_idx = 0;
+    
+    while (start_idx + window_size <= this->index)
+    {
+        // Check if dataset has capacity
+        if (dataset->num_samples >= dataset->capacity)
+        {
+            break;  // Dataset is full
+        }
+        
+        MLFeatureVector features;
+        bool success = this->ExtractMLFeaturesFromSegment(start_idx, window_size, 
+                                                          sampling_rate, &features);
+        
+        if (success)
+        {
+            SignalProcessing::AddFeaturesToDataset(dataset, &features, -1);
+            num_windows++;
+        }
+        
+        start_idx += step_size;
+    }
+    
+    return num_windows;
+}
+
+/// @brief Batch feature extraction from multiple signals
+/// @param signals Array of signal arrays
+/// @param signal_sizes Array of signal sizes
+/// @param num_signals Number of signals
+/// @param sampling_rate Sampling rate in Hz
+/// @param dataset Output dataset
+/// @return Number of signals processed
+int SignalProcessing::BatchExtractFeatures(double **signals, int *signal_sizes, int num_signals,
+                                          double sampling_rate, MLDataset *dataset)
+{
+    if (signals == nullptr || signal_sizes == nullptr || dataset == nullptr || num_signals <= 0)
+    {
+        return 0;
+    }
+    
+    int num_processed = 0;
+    
+    for (int s = 0; s < num_signals; s++)
+    {
+        // Check if dataset has capacity
+        if (dataset->num_samples >= dataset->capacity)
+        {
+            break;  // Dataset is full
+        }
+        
+        // Create temporary SignalProcessing object for this signal
+        SignalProcessing sp;
+        for (int i = 0; i < signal_sizes[s]; i++)
+        {
+            sp.AddValue(signals[s][i]);
+        }
+        
+        // Extract features
+        MLFeatureVector features;
+        bool success = sp.ExtractMLFeatures(sampling_rate, &features);
+        
+        if (success)
+        {
+            SignalProcessing::AddFeaturesToDataset(dataset, &features, -1);
+            num_processed++;
+        }
+    }
+    
+    return num_processed;
 }
 
 // ========== DECIMATION AND INTERPOLATION IMPLEMENTATION ==========

@@ -329,8 +329,306 @@ Test demonstrates:
 4. Per-segment (blade) analysis
 5. Feature normalization
 
+## Downstream ML/AI Integration
+
+### Overview
+
+Biblioteca oferă acum **integrare completă** pentru preprocessing batch, training statistics și export către framework-uri externe ML/AI.
+
+### Dataset Management
+
+#### Crearea unui Dataset
+
+```cpp
+MLDataset training_set;
+SignalProcessing::CreateMLDataset(100, true, &training_set);
+// capacity=100 samples, with_labels=true pentru supervised learning
+```
+
+#### Adăugarea de Sample-uri
+
+```cpp
+// Extrage features din semnal
+MLFeatureVector features;
+sp.ExtractMLFeatures(100.0, &features);
+
+// Adaugă la dataset cu label
+SignalProcessing::AddFeaturesToDataset(&training_set, &features, label);
+```
+
+#### Eliberarea Memoriei
+
+```cpp
+SignalProcessing::FreeMLDataset(&training_set);
+```
+
+### Rolling Window Processing
+
+Pentru time series și streaming data:
+
+```cpp
+SignalProcessing sp;
+// ... adaugă date ...
+
+MLDataset windows;
+SignalProcessing::CreateMLDataset(50, false, &windows);
+
+int num_windows = sp.ExtractMLFeaturesRollingWindow(
+    100,    // window_size
+    50,     // step_size (50% overlap)
+    100.0,  // sampling_rate
+    &windows
+);
+
+// Acum ai features pentru fiecare fereastră
+```
+
+### Training Statistics & Normalization
+
+#### Calculează Statistici din Training Set
+
+```cpp
+MLTrainingStats stats;
+SignalProcessing::ComputeTrainingStats(&training_set, &stats);
+
+// stats conține acum mean, std, min, max pentru fiecare feature
+// Salvează aceste statistici pentru a normaliza datele noi!
+```
+
+#### Normalizează Dataset (Z-Score)
+
+```cpp
+// Normalizează toate sample-urile din dataset
+SignalProcessing::NormalizeDataset(&training_set, &stats);
+```
+
+#### Normalizează Features Noi (Inference)
+
+```cpp
+// Pentru predicție pe date noi
+MLFeatureVector new_features;
+sp.ExtractMLFeatures(100.0, &new_features);
+
+// Aplică aceleași statistici de training
+SignalProcessing::NormalizeMLFeatures(&new_features, 
+                                      stats.mean_values, 
+                                      stats.std_values);
+```
+
+### CSV Export pentru Python/MATLAB
+
+```cpp
+// Exportă dataset ca CSV
+SignalProcessing::ExportDatasetToCSV(&training_set, 
+                                     "training_data.csv", 
+                                     true);  // include labels
+```
+
+**Python Integration:**
+```python
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+
+# Load data
+df = pd.read_csv('training_data.csv')
+X = df.iloc[:, :-1].values  # All features (21)
+y = df.iloc[:, -1].values   # Labels
+
+# Train model
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+model = SVC(kernel='rbf')
+model.fit(X_train, y_train)
+accuracy = model.score(X_test, y_test)
+```
+
+### Batch Processing
+
+Pentru procesarea simultană a mai multor semnale:
+
+```cpp
+// Array de semnale din mai mulți senzori
+double *signals[10];
+int sizes[10];
+
+// ... populează signals și sizes ...
+
+MLDataset batch;
+SignalProcessing::CreateMLDataset(10, false, &batch);
+
+int processed = SignalProcessing::BatchExtractFeatures(
+    signals, sizes, 10, 100.0, &batch
+);
+
+// Acum ai features pentru toate cele 10 semnale
+```
+
+### Complete Workflow: ECG Classification
+
+```cpp
+// 1. Colectează training data
+MLDataset training_set;
+SignalProcessing::CreateMLDataset(100, true, &training_set);
+
+for (int i = 0; i < num_patients; i++) {
+    SignalProcessing sp;
+    // ... adaugă date ECG ...
+    
+    // Preprocesare
+    double denoised[1000];
+    sp.KalmanFilter(0.01, 0.1, denoised);
+    
+    SignalProcessing clean;
+    for (int j = 0; j < sp.GetIndex(); j++) {
+        clean.AddValue(denoised[j]);
+    }
+    
+    // Extrage features
+    MLFeatureVector features;
+    clean.ExtractMLFeatures(100.0, &features);
+    
+    // Adaugă la dataset
+    int label = patient_has_arrhythmia[i] ? 1 : 0;
+    SignalProcessing::AddFeaturesToDataset(&training_set, &features, label);
+}
+
+// 2. Calculează training statistics
+MLTrainingStats stats;
+SignalProcessing::ComputeTrainingStats(&training_set, &stats);
+
+// 3. Normalizează dataset
+SignalProcessing::NormalizeDataset(&training_set, &stats);
+
+// 4. Exportă pentru training extern
+SignalProcessing::ExportDatasetToCSV(&training_set, "ecg_train.csv", true);
+
+// 5. Training în Python (TensorFlow/Keras)
+// ... antrenează modelul folosind CSV-ul exportat ...
+
+// 6. Inference pe date noi
+SignalProcessing new_patient;
+// ... adaugă date ECG noi ...
+
+MLFeatureVector test_features;
+new_patient.ExtractMLFeatures(100.0, &test_features);
+
+// Normalizează folosind ACELAȘI stats din training
+SignalProcessing::NormalizeMLFeatures(&test_features, 
+                                      stats.mean_values, 
+                                      stats.std_values);
+
+// Export pentru predicție
+double feature_array[21];
+SignalProcessing::ExportFeaturesToArray(&test_features, feature_array);
+
+// feature_array gata pentru model.predict() în Python sau inferență C++
+```
+
+### Integration Testing
+
+```bash
+# Build și run test complet
+cd test
+./build_ml_downstream.sh   # Linux
+.\build_ml_downstream.bat  # Windows
+
+./test_ml_downstream
+```
+
+Test demonstrează:
+1. Dataset creation și management
+2. Batch feature extraction (ECG classification)
+3. Rolling window processing (time series)
+4. Training statistics computation
+5. Dataset normalization (z-score)
+6. CSV export pentru Python/MATLAB
+7. Batch processing pentru inference
+8. Complete workflow: signal → preprocessing → features → normalization → model input
+
 ## See Also
 
 - `ANOMALY_DETECTION_GUIDE.md` - Anomaly detection methods
-- `test/test_ml_features.cpp` - Complete usage examples
+- `test/test_ml_features.cpp` - Feature extraction examples
+- `test/test_ml_downstream.cpp` - Complete downstream ML/AI integration (datasets, batch processing, CSV export)
 - `examples/example_complete.cpp` - ECG processing workflow
+
+## Framework Integration Resources
+
+### TensorFlow / Keras (Python)
+```python
+# Import CSV și train neural network
+import tensorflow as tf
+from tensorflow import keras
+import pandas as pd
+
+df = pd.read_csv('training_data.csv')
+X = df.iloc[:, :-1].values
+y = df.iloc[:, -1].values
+
+model = keras.Sequential([
+    keras.layers.Dense(64, activation='relu', input_shape=(21,)),
+    keras.layers.Dropout(0.3),
+    keras.layers.Dense(32, activation='relu'),
+    keras.layers.Dense(1, activation='sigmoid')
+])
+
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+model.fit(X, y, epochs=50, batch_size=16, validation_split=0.2)
+```
+
+### PyTorch (Python)
+```python
+import torch
+import torch.nn as nn
+import pandas as pd
+
+df = pd.read_csv('training_data.csv')
+X = torch.FloatTensor(df.iloc[:, :-1].values)
+y = torch.FloatTensor(df.iloc[:, -1].values)
+
+class ECGClassifier(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = nn.Linear(21, 64)
+        self.fc2 = nn.Linear(64, 32)
+        self.fc3 = nn.Linear(32, 1)
+        
+    def forward(self, x):
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        return torch.sigmoid(self.fc3(x))
+```
+
+### scikit-learn SVM (Python)
+```python
+from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split
+import pandas as pd
+
+df = pd.read_csv('training_data.csv')
+X = df.iloc[:, :-1].values
+y = df.iloc[:, -1].values
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+svm = SVC(kernel='rbf', C=1.0, gamma='scale')
+svm.fit(X_train, y_train)
+accuracy = svm.score(X_test, y_test)
+print(f"SVM Accuracy: {accuracy:.2%}")
+```
+
+### MATLAB Machine Learning Toolbox
+```matlab
+% Import CSV
+data = readtable('training_data.csv');
+X = table2array(data(:, 1:21));
+y = table2array(data(:, 22));
+
+% Train SVM
+svmModel = fitcsvm(X, y, 'KernelFunction', 'rbf', 'Standardize', true);
+
+% Cross-validation
+cvModel = crossval(svmModel);
+accuracy = 1 - kfoldLoss(cvModel);
+fprintf('SVM Accuracy: %.2f%%\n', accuracy * 100);
+```
