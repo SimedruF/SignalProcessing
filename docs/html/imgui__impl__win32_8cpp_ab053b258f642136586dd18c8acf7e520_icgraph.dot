@@ -1,0 +1,25 @@
+digraph "IsVkDown"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir="RL";
+  Node1 [id="Node000001",label="IsVkDown",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [id="edge1_Node000001_Node000002",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node2 [id="Node000002",label="ImGui_ImplWin32_ProcessKey\lEventsWorkarounds",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui__impl__win32_8cpp.html#a500ab5c51b0c6e816b77ca4c29739a34",tooltip=" "];
+  Node2 -> Node3 [id="edge2_Node000002_Node000003",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node3 [id="Node000003",label="ImGui_ImplWin32_NewFrame",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui__impl__win32_8cpp.html#ade4f55b90fdbd75a562d894d33f1909e",tooltip=" "];
+  Node3 -> Node4 [id="edge3_Node000003_Node000004",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node4 [id="Node000004",label="main",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui_2examples_2example__win32__directx10_2main_8cpp.html#a2c3f6775325c30275d11c6abee2db6a0",tooltip=" "];
+  Node1 -> Node5 [id="edge4_Node000001_Node000005",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node5 [id="Node000005",label="ImGui_ImplWin32_UpdateKey\lModifiers",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui__impl__win32_8cpp.html#a2aeb32bb0cfc356c58dddedc7edb7942",tooltip=" "];
+  Node5 -> Node6 [id="edge5_Node000005_Node000006",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node6 [id="Node000006",label="ImGui_ImplWin32_WndProcHandlerEx",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui__impl__win32_8cpp.html#a7038e1f34a0be8f5b6023a08973f4431",tooltip=" "];
+  Node6 -> Node7 [id="edge6_Node000006_Node000007",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node7 [id="Node000007",label="ImGui_ImplWin32_WndProcHandler",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui__impl__win32_8cpp.html#a87a3f9652a75339308cf5fd5699ef1fd",tooltip=" "];
+  Node7 -> Node8 [id="edge7_Node000007_Node000008",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node8 [id="Node000008",label="WndProc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui_2examples_2example__win32__directx10_2main_8cpp.html#aa726a6316fd5b9e2520d1c71670ccc16",tooltip=" "];
+  Node8 -> Node4 [id="edge8_Node000008_Node000004",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node1 -> Node6 [id="edge9_Node000001_Node000006",dir="back",color="steelblue1",style="solid",tooltip=" "];
+}

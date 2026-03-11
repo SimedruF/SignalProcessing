@@ -1,0 +1,35 @@
+digraph "sUpdateContext"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir="LR";
+  Node1 [id="Node000001",label="sUpdateContext",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip="Update a connected context."];
+  Node1 -> Node2 [id="edge1_Node000001_Node000002",color="steelblue1",style="solid",tooltip=" "];
+  Node2 [id="Node000002",label="sNetToNative32",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$uSynergy_8c.html#a451254cc8d2b2c7d7a7cb5105bd9948d",tooltip="Read 32 bit integer in network byte order and convert to native byte order."];
+  Node1 -> Node3 [id="edge2_Node000001_Node000003",color="steelblue1",style="solid",tooltip=" "];
+  Node3 [id="Node000003",label="sProcessMessage",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$uSynergy_8c.html#a59c2312641eb1efbd5aa83ada313f173",tooltip=" "];
+  Node3 -> Node4 [id="edge3_Node000003_Node000004",color="steelblue1",style="solid",tooltip=" "];
+  Node4 [id="Node000004",label="sAddString",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$uSynergy_8c.html#a3ea1bd27a665c27e232fc69c5e407722",tooltip="Add string to reply packet."];
+  Node3 -> Node5 [id="edge4_Node000003_Node000005",color="steelblue1",style="solid",tooltip=" "];
+  Node5 [id="Node000005",label="sAddUInt16",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$uSynergy_8c.html#af30a19d4377d2697b6129c22fe3aad51",tooltip="Add uint16 to reply packet."];
+  Node3 -> Node6 [id="edge5_Node000003_Node000006",color="steelblue1",style="solid",tooltip=" "];
+  Node6 [id="Node000006",label="sAddUInt32",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$uSynergy_8c.html#a8357b9b2f76438a356c88936c62c92fc",tooltip="Add uint32 to reply packet."];
+  Node3 -> Node7 [id="edge6_Node000003_Node000007",color="steelblue1",style="solid",tooltip=" "];
+  Node7 [id="Node000007",label="sNetToNative16",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$uSynergy_8c.html#a9ce6469268b71eb8174c28ac743f6e6c",tooltip="Read 16 bit integer in network byte order and convert to native byte order."];
+  Node3 -> Node2 [id="edge7_Node000003_Node000002",color="steelblue1",style="solid",tooltip=" "];
+  Node3 -> Node8 [id="edge8_Node000003_Node000008",color="steelblue1",style="solid",tooltip=" "];
+  Node8 [id="Node000008",label="sSendJoystickCallback",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$uSynergy_8c.html#ab947fe56d6fbc058d6e0bc1d1b9deac0",tooltip="Send joystick callback."];
+  Node3 -> Node9 [id="edge9_Node000003_Node000009",color="steelblue1",style="solid",tooltip=" "];
+  Node9 [id="Node000009",label="sSendKeyboardCallback",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$uSynergy_8c.html#af2e7d38df6c86c7d67d21ae50146f021",tooltip="Send keyboard callback when a key has been pressed or released."];
+  Node3 -> Node10 [id="edge10_Node000003_Node000010",color="steelblue1",style="solid",tooltip=" "];
+  Node10 [id="Node000010",label="sSendMouseCallback",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$uSynergy_8c.html#a28d251708a95ca59954286ecab943588",tooltip="Call mouse callback after a mouse event."];
+  Node3 -> Node11 [id="edge11_Node000003_Node000011",color="steelblue1",style="solid",tooltip=" "];
+  Node11 [id="Node000011",label="sSendReply",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$uSynergy_8c.html#a6c0e66183f71c6a6eaf807d31db6248e",tooltip="Send reply packet."];
+  Node3 -> Node12 [id="edge12_Node000003_Node000012",color="steelblue1",style="solid",tooltip=" "];
+  Node12 [id="Node000012",label="sTrace",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$uSynergy_8c.html#aaad4842683f74b54ec3691123438ac2b",tooltip="Trace text to client."];
+  Node1 -> Node13 [id="edge13_Node000001_Node000013",color="steelblue1",style="solid",tooltip=" "];
+  Node13 [id="Node000013",label="sSetDisconnected",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$uSynergy_8c.html#a60210639e7bb4c9c248e111a7b1db483",tooltip="Mark context as being disconnected."];
+  Node1 -> Node12 [id="edge14_Node000001_Node000012",color="steelblue1",style="solid",tooltip=" "];
+}

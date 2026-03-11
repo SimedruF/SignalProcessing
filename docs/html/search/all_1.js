@@ -1,0 +1,26 @@
+var searchData=
+[
+  ['1_201_20instalează_20msys2_0',['1.1 Instalează MSYS2',['../md_examples_2SETUP__WINDOWS.html#autotoc_md594',1,'']]],
+  ['1_202_20instalează_20dependențele_1',['1.2 Instalează dependențele',['../md_examples_2SETUP__WINDOWS.html#autotoc_md595',1,'']]],
+  ['1_203_20build_2',['1.3 Build',['../md_examples_2SETUP__WINDOWS.html#autotoc_md596',1,'']]],
+  ['1_2092_3',['Rendering: Adding support for &lt;tt&gt;ImGuiBackendFlags_RendererHasTextures&lt;/tt&gt; (1.92+)',['../md_examples_2imgui_2docs_2BACKENDS.html#autotoc_md187',1,'']]],
+  ['1_2092_20june_202025_4',['New! Dynamic Fonts system in 1.92 (June 2025)',['../md_examples_2imgui_2docs_2FONTS.html#autotoc_md302',1,'']]],
+  ['1_20choosing_20detection_20thresholds_5',['1. Choosing Detection Thresholds',['../md_ANOMALY__DETECTION__GUIDE.html#autotoc_md122',1,'']]],
+  ['1_20clone_20configdatawriter_20library_6',['1. Clone ConfigDataWriter Library',['../md_examples_2README__CONFIG.html#autotoc_md530',1,'']]],
+  ['1_20data_20acquisition_20simulated_7',['1. Data Acquisition (Simulated)',['../D:/dev/SignalProcessing/SignalProcessing/examples/README.md#autotoc_md494',1,'']]],
+  ['1_20export_20ml_20datasets_8',['1. Export ML Datasets',['../md_HDF5__EXPORT__GUIDE.html#autotoc_md139',1,'']]],
+  ['1_20extractmlfeatures_9',['1. ExtractMLFeatures()',['../md_ML__FEATURES__GUIDE.html#autotoc_md53',1,'']]],
+  ['1_20instalează_20vcpkg_10',['3.1 Instalează vcpkg',['../md_examples_2SETUP__WINDOWS.html#autotoc_md602',1,'']]],
+  ['1_20instalează_20visual_20studio_202022_11',['2.1 Instalează Visual Studio 2022',['../md_examples_2SETUP__WINDOWS.html#autotoc_md598',1,'']]],
+  ['1_20invalid_20filename_20due_20to_20use_20of_20tt_20tt_20or_20unexpected_20working_20directory_12',['(1) Invalid filename due to use of &lt;tt&gt;\&lt;/tt&gt; or unexpected working directory.',['../md_examples_2imgui_2docs_2FONTS.html#autotoc_md296',1,'']]],
+  ['1_20monitorizare_20medicală_20ecg_13',['1. Monitorizare medicală ECG',['../md_ML__FEATURES__GUIDE.html#autotoc_md46',1,'']]],
+  ['1_20tt_20deprecated_20flag_20even_20with_20ems_204_200_2010_14',['1 tt deprecated flag even with ems 4 0 10',['../D:/dev/SignalProcessing/SignalProcessing/examples/imgui/examples/example_glfw_wgpu/README.md#autotoc_md385',1,'Generate Emscripten forcing &lt;tt&gt;-sUSE_WEBGPU=1&lt;/tt&gt; deprecated flag even with EMS &gt;= 4.0.10'],['../D:/dev/SignalProcessing/SignalProcessing/examples/imgui/examples/example_sdl2_wgpu/README.md#autotoc_md418',1,'Generate Emscripten forcing &lt;tt&gt;-sUSE_WEBGPU=1&lt;/tt&gt; deprecated flag even with EMS &gt;= 4.0.10'],['../D:/dev/SignalProcessing/SignalProcessing/examples/imgui/examples/example_sdl3_wgpu/README.md#autotoc_md449',1,'Generate Emscripten forcing &lt;tt&gt;-sUSE_WEBGPU=1&lt;/tt&gt; deprecated flag even with EMS &gt;= 4.0.10']]],
+  ['1_20z_20score_20method_20statistical_20threshold_15',['1. Z-Score Method (Statistical Threshold)',['../md_ANOMALY__DETECTION__GUIDE.html#autotoc_md101',1,'']]],
+  ['10_16',['10',['../D:/dev/SignalProcessing/SignalProcessing/examples/imgui/examples/example_glfw_wgpu/README.md#autotoc_md385',1,'Generate Emscripten forcing &lt;tt&gt;-sUSE_WEBGPU=1&lt;/tt&gt; deprecated flag even with EMS &gt;= 4.0.10'],['../D:/dev/SignalProcessing/SignalProcessing/examples/imgui/examples/example_sdl2_wgpu/README.md#autotoc_md418',1,'Generate Emscripten forcing &lt;tt&gt;-sUSE_WEBGPU=1&lt;/tt&gt; deprecated flag even with EMS &gt;= 4.0.10'],['../D:/dev/SignalProcessing/SignalProcessing/examples/imgui/examples/example_sdl3_wgpu/README.md#autotoc_md449',1,'Generate Emscripten forcing &lt;tt&gt;-sUSE_WEBGPU=1&lt;/tt&gt; deprecated flag even with EMS &gt;= 4.0.10']]],
+  ['14_2004_20and_20macos_17',['On Ubuntu 14.04+ and macOS',['../D:/dev/SignalProcessing/SignalProcessing/examples/imgui/examples/example_allegro5/README.md#autotoc_md369',1,'']]],
+  ['1_3a_20collect_20training_20data_18',['Step 1: Collect Training Data',['../md_ML__FEATURES__GUIDE.html#autotoc_md62',1,'']]],
+  ['1_3a_20msys2_20recomandat_20cel_20mai_20simplu_19',['Opțiunea 1: MSYS2 (RECOMANDAT - cel mai simplu)',['../md_examples_2SETUP__WINDOWS.html#autotoc_md593',1,'']]],
+  ['1_3a_20pre_20built_20binaries_20recommended_20',['Option 1: Pre-built Binaries (Recommended)',['../md_HDF5__EXPORT__GUIDE.html#autotoc_md144',1,'']]],
+  ['1_3a_20real_20time_20turbine_20monitoring_21',['Example 1: Real-Time Turbine Monitoring',['../md_ANOMALY__DETECTION__GUIDE.html#autotoc_md117',1,'']]],
+  ['1_3a_20setup_20download_20imgui_20and_20implot_22',['Step 1: Setup (download ImGui and ImPlot)',['../md_examples_2README__IMGUI.html#autotoc_md565',1,'']]]
+];

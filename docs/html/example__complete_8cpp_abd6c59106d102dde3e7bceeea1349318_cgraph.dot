@@ -1,0 +1,13 @@
+digraph "acquire_ecg_data"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir="LR";
+  Node1 [id="Node000001",label="acquire_ecg_data",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip="Simulates ECG data acquisition."];
+  Node1 -> Node2 [id="edge1_Node000001_Node000002",color="steelblue1",style="solid",tooltip=" "];
+  Node2 [id="Node000002",label="SignalProcessing::AddValue\lWithTimestamp",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classSignalProcessing.html#a5e295ca09c9fc0966c7436856690b1b7",tooltip="Adds a value with timestamp to the signal vector."];
+  Node1 -> Node3 [id="edge2_Node000001_Node000003",color="steelblue1",style="solid",tooltip=" "];
+  Node3 [id="Node000003",label="SignalProcessing::GetIndex",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classSignalProcessing.html#a702efde99214362fce7c4325a432b0be",tooltip="Returns the current index."];
+}

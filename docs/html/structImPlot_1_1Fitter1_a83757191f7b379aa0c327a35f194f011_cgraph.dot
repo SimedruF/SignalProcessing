@@ -1,0 +1,19 @@
+digraph "ImPlot::Fitter1::Fit"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir="LR";
+  Node1 [id="Node000001",label="ImPlot::Fitter1::Fit",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [id="edge1_Node000001_Node000002",color="steelblue1",style="solid",tooltip=" "];
+  Node2 [id="Node000002",label="ImPlotAxis::ExtendFitWith",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structImPlotAxis.html#a743ad230408127f334606ff870114db5",tooltip=" "];
+  Node2 -> Node3 [id="edge2_Node000002_Node000003",color="steelblue1",style="solid",tooltip=" "];
+  Node3 [id="Node000003",label="ImPlotRange::Contains",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structImPlotRange.html#ae4bd0a1d030ffe22bd4fd44a773e26c4",tooltip=" "];
+  Node2 -> Node4 [id="edge3_Node000002_Node000004",color="steelblue1",style="solid",tooltip=" "];
+  Node4 [id="Node000004",label="ImHasFlag",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$implot__internal_8h.html#abb2cd62b00828e6adf11b2962a7b2787",tooltip=" "];
+  Node2 -> Node5 [id="edge4_Node000002_Node000005",color="steelblue1",style="solid",tooltip=" "];
+  Node5 [id="Node000005",label="ImNanOrInf",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$implot__internal_8h.html#a68b8631581903ce12fda80d48ac50e91",tooltip=" "];
+  Node5 -> Node6 [id="edge5_Node000005_Node000006",color="steelblue1",style="solid",tooltip=" "];
+  Node6 [id="Node000006",label="ImNan",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$implot__internal_8h.html#a8613c64a1831f94207907e472b6fbb8d",tooltip=" "];
+}

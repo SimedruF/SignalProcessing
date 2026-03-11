@@ -1,0 +1,19 @@
+digraph "ImPlot::PrimLine"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir="RL";
+  Node1 [id="Node000001",label="ImPlot::PrimLine",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [id="edge1_Node000001_Node000002",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node2 [id="Node000002",label="ImPlot::RendererLineStrip\l::Render",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structImPlot_1_1RendererLineStrip.html#a7261946372f03b49cea7751522e322e3",tooltip=" "];
+  Node1 -> Node3 [id="edge2_Node000001_Node000003",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node3 [id="Node000003",label="ImPlot::RendererLineStrip\lSkip::Render",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structImPlot_1_1RendererLineStripSkip.html#a9643e2b898845d4135a07d83953c79a5",tooltip=" "];
+  Node1 -> Node4 [id="edge3_Node000001_Node000004",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node4 [id="Node000004",label="ImPlot::RendererLineSegments1\l::Render",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structImPlot_1_1RendererLineSegments1.html#a21d413bf0848d6752c131dad34d06b9d",tooltip=" "];
+  Node1 -> Node5 [id="edge4_Node000001_Node000005",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node5 [id="Node000005",label="ImPlot::RendererLineSegments2\l::Render",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structImPlot_1_1RendererLineSegments2.html#a4bf6bb9577b65263d0b3f641caa91c28",tooltip=" "];
+  Node1 -> Node6 [id="edge5_Node000001_Node000006",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node6 [id="Node000006",label="ImPlot::RendererMarkersLine\l::Render",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structImPlot_1_1RendererMarkersLine.html#a3c17ac1b8c2a8583438d9dc5935c13f9",tooltip=" "];
+}

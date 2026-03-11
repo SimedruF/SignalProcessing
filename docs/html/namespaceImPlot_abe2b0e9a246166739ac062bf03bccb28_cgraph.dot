@@ -1,0 +1,24 @@
+digraph "ImPlot::FloorTime"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir="LR";
+  Node1 [id="Node000001",label="ImPlot::FloorTime",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [id="edge1_Node000001_Node000002",color="steelblue1",style="solid",tooltip=" "];
+  Node2 [id="Node000002",label="ImPlot::GetTime",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$namespaceImPlot.html#a2e886479349b38a9548f00338e2932b9",tooltip=" "];
+  Node2 -> Node3 [id="edge2_Node000002_Node000003",color="steelblue1",style="solid",tooltip=" "];
+  Node3 [id="Node000003",label="ImPlot::GetGmtTime",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$namespaceImPlot.html#ab329dc5873e6a36b5cdf58decbb8089c",tooltip=" "];
+  Node2 -> Node4 [id="edge3_Node000002_Node000004",color="steelblue1",style="solid",tooltip=" "];
+  Node4 [id="Node000004",label="ImPlot::GetLocTime",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$namespaceImPlot.html#a82771884fd02fb4afe0aa645299b964e",tooltip=" "];
+  Node2 -> Node5 [id="edge4_Node000002_Node000005",color="steelblue1",style="solid",tooltip=" "];
+  Node5 [id="Node000005",label="ImPlot::GetStyle",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$namespaceImPlot.html#a6ca87715ebee7425a2cb397ba0fb42d4",tooltip=" "];
+  Node1 -> Node6 [id="edge5_Node000001_Node000006",color="steelblue1",style="solid",tooltip=" "];
+  Node6 [id="Node000006",label="ImPlot::MkTime",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$namespaceImPlot.html#ab2a5f5c9b97c591d3c8a926b5862f904",tooltip=" "];
+  Node6 -> Node5 [id="edge6_Node000006_Node000005",color="steelblue1",style="solid",tooltip=" "];
+  Node6 -> Node7 [id="edge7_Node000006_Node000007",color="steelblue1",style="solid",tooltip=" "];
+  Node7 [id="Node000007",label="ImPlot::MkGmtTime",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$namespaceImPlot.html#aad373fcfcb61646a85b584c093b873b1",tooltip=" "];
+  Node6 -> Node8 [id="edge8_Node000006_Node000008",color="steelblue1",style="solid",tooltip=" "];
+  Node8 [id="Node000008",label="ImPlot::MkLocTime",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$namespaceImPlot.html#a69e0d17c04de86e112c84e71086a54df",tooltip=" "];
+}

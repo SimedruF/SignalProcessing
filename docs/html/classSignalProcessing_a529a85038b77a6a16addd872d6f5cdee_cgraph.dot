@@ -1,0 +1,27 @@
+digraph "SignalProcessing::ExtractMLFeaturesFromSegment"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir="LR";
+  Node1 [id="Node000001",label="SignalProcessing::Extract\lMLFeaturesFromSegment",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip="Extracts feature vector from a specific segment/window."];
+  Node1 -> Node2 [id="edge1_Node000001_Node000002",color="steelblue1",style="solid",tooltip=" "];
+  Node2 [id="Node000002",label="SignalProcessing::AddValue",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classSignalProcessing.html#a0366acebb65b11c9474ee7521ddd9254",tooltip="Adds a value to the signal vector."];
+  Node1 -> Node3 [id="edge2_Node000001_Node000003",color="steelblue1",style="solid",tooltip=" "];
+  Node3 [id="Node000003",label="SignalProcessing::Extract\lMLFeatures",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classSignalProcessing.html#af8a4d667fed58a9d8369d5f139f11117",tooltip="Extracts comprehensive feature vector for ML/AI applications."];
+  Node3 -> Node4 [id="edge3_Node000003_Node000004",color="steelblue1",style="solid",tooltip=" "];
+  Node4 [id="Node000004",label="SignalProcessing::FFTAnalysis",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classSignalProcessing.html#a15c4a00d6736300f45375b84a03b5a43",tooltip="Performs FFT on a window of the signal."];
+  Node3 -> Node5 [id="edge4_Node000003_Node000005",color="steelblue1",style="solid",tooltip=" "];
+  Node5 [id="Node000005",label="SignalProcessing::FreeSpectrum",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classSignalProcessing.html#a6bcb48388dce941a3e092dc66590c844",tooltip="Frees memory allocated for frequency spectrum."];
+  Node3 -> Node6 [id="edge5_Node000003_Node000006",color="steelblue1",style="solid",tooltip=" "];
+  Node6 [id="Node000006",label="SignalProcessing::GetMean",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classSignalProcessing.html#a056018df5a25424347be38c233a93d9d",tooltip="Calculates the mean (average) of the signal vector."];
+  Node3 -> Node7 [id="edge6_Node000003_Node000007",color="steelblue1",style="solid",tooltip=" "];
+  Node7 [id="Node000007",label="SignalProcessing::GetPower\lInBand",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classSignalProcessing.html#a549810c60682cf0a9efbc4d6ed8cd658",tooltip="Calculates power in a frequency band."];
+  Node3 -> Node8 [id="edge7_Node000003_Node000008",color="steelblue1",style="solid",tooltip=" "];
+  Node8 [id="Node000008",label="SignalProcessing::GetStandard\lDeviation",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classSignalProcessing.html#ae5edbd0df40fa6eeb779dc9778fe84a8",tooltip="Calculates the standard deviation of the signal vector."];
+  Node8 -> Node9 [id="edge8_Node000008_Node000009",color="steelblue1",style="solid",tooltip=" "];
+  Node9 [id="Node000009",label="SignalProcessing::GetVariance",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classSignalProcessing.html#a3f7995d05e290df9afb221e69d205d08",tooltip="Calculates the variance of the signal vector."];
+  Node9 -> Node6 [id="edge9_Node000009_Node000006",color="steelblue1",style="solid",tooltip=" "];
+  Node3 -> Node9 [id="edge10_Node000003_Node000009",color="steelblue1",style="solid",tooltip=" "];
+}

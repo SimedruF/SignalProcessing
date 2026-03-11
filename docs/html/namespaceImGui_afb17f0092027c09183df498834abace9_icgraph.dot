@@ -1,0 +1,56 @@
+digraph "ImGui::InputScalarN"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir="RL";
+  Node1 [id="Node000001",label="ImGui::InputScalarN",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [id="edge1_Node000001_Node000002",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node2 [id="Node000002",label="ImGui::InputFloat2",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$namespaceImGui.html#a854ba6decd4ae7e4b0980a9c71bfa47d",tooltip=" "];
+  Node2 -> Node3 [id="edge2_Node000002_Node000003",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node3 [id="Node000003",label="ImPlot::Demo_ColormapWidgets",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$namespaceImPlot.html#a6bcbf96d29d2ca0226bdee0f2215d279",tooltip=" "];
+  Node3 -> Node4 [id="edge3_Node000003_Node000004",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node4 [id="Node000004",label="ImPlot::ShowDemoWindow",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$namespaceImPlot.html#ac1b218e5fc8200b6a4aa646238a9139c",tooltip=" "];
+  Node4 -> Node5 [id="edge4_Node000004_Node000005",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node5 [id="Node000005",label="main",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$implot_2example_2main_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4",tooltip=" "];
+  Node2 -> Node6 [id="edge5_Node000002_Node000006",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node6 [id="Node000006",label="DemoWindowWidgetsMultiComponents",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui_2imgui__demo_8cpp.html#a2470e3438c4d34a6805b0f48393d37cd",tooltip=" "];
+  Node6 -> Node7 [id="edge6_Node000006_Node000007",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node7 [id="Node000007",label="DemoWindowWidgets",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui_2imgui__demo_8cpp.html#a9a639caab781642cbc4f4a23bfbd11cd",tooltip=" "];
+  Node7 -> Node8 [id="edge7_Node000007_Node000008",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node8 [id="Node000008",label="ImGui::ShowDemoWindow",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$namespaceImGui.html#af95643a0ce4893b9e57c12991922fb18",tooltip=" "];
+  Node8 -> Node5 [id="edge8_Node000008_Node000005",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node8 -> Node9 [id="edge9_Node000008_Node000009",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node9 [id="Node000009",label="main",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui_2examples_2example__allegro5_2main_8cpp.html#a2c3f6775325c30275d11c6abee2db6a0",tooltip=" "];
+  Node8 -> Node10 [id="edge10_Node000008_Node000010",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node10 [id="Node000010",label="MainLoopStep",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui_2examples_2example__android__opengl3_2main_8cpp.html#a4c41f1a1f60dcb4882836741b9206efc",tooltip=" "];
+  Node10 -> Node11 [id="edge11_Node000010_Node000011",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node11 [id="Node000011",label="android_main",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui_2examples_2example__android__opengl3_2main_8cpp.html#ae5bda2e48680274cd2bc04d6b6e27b46",tooltip=" "];
+  Node10 -> Node12 [id="edge12_Node000010_Node000012",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node12 [id="Node000012",label="main",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui_2examples_2example__glut__opengl2_2main_8cpp.html#a3c04138a5bfe5d72780bb7e82a18e627",tooltip=" "];
+  Node8 -> Node13 [id="edge13_Node000008_Node000013",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node13 [id="Node000013",label="MainLoopStep",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui_2examples_2example__glut__opengl2_2main_8cpp.html#a4c41f1a1f60dcb4882836741b9206efc",tooltip=" "];
+  Node8 -> Node4 [id="edge14_Node000008_Node000004",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node1 -> Node14 [id="edge15_Node000001_Node000014",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node14 [id="Node000014",label="ImGui::InputFloat3",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$namespaceImGui.html#a970a00fd1a4226c697ea5fb807fb62d8",tooltip=" "];
+  Node14 -> Node15 [id="edge16_Node000014_Node000015",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node15 [id="Node000015",label="DemoWindowWidgetsBasic",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui_2imgui__demo_8cpp.html#a89786289048f1a477095224630738f3a",tooltip=" "];
+  Node15 -> Node7 [id="edge17_Node000015_Node000007",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node14 -> Node6 [id="edge18_Node000014_Node000006",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node14 -> Node16 [id="edge19_Node000014_Node000016",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node16 [id="Node000016",label="DemoWindowWidgetsQuerying\lStatuses",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui_2imgui__demo_8cpp.html#a5de91117986b51cfb587630d6ff46205",tooltip=" "];
+  Node16 -> Node7 [id="edge20_Node000016_Node000007",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node1 -> Node17 [id="edge21_Node000001_Node000017",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node17 [id="Node000017",label="ImGui::InputFloat4",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$namespaceImGui.html#a69675d2e9780a0e5a7a372f936b64d49",tooltip=" "];
+  Node17 -> Node6 [id="edge22_Node000017_Node000006",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node1 -> Node18 [id="edge23_Node000001_Node000018",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node18 [id="Node000018",label="ImGui::InputInt2",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$namespaceImGui.html#a83dfd2daacefb741e67d8d69821e1590",tooltip=" "];
+  Node18 -> Node6 [id="edge24_Node000018_Node000006",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node1 -> Node19 [id="edge25_Node000001_Node000019",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node19 [id="Node000019",label="ImGui::InputInt3",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$namespaceImGui.html#ab8e7466e5bdda70fefa551eb662dc3f5",tooltip=" "];
+  Node19 -> Node6 [id="edge26_Node000019_Node000006",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node1 -> Node20 [id="edge27_Node000001_Node000020",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node20 [id="Node000020",label="ImGui::InputInt4",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$namespaceImGui.html#a3a57668b83f7a99d295f94baa71add0a",tooltip=" "];
+  Node20 -> Node6 [id="edge28_Node000020_Node000006",dir="back",color="steelblue1",style="solid",tooltip=" "];
+}

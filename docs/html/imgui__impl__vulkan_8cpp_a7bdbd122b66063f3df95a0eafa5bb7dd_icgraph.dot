@@ -1,0 +1,25 @@
+digraph "ImGui_ImplVulkanH_DestroyFrame"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir="RL";
+  Node1 [id="Node000001",label="ImGui_ImplVulkanH_Destroy\lFrame",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [id="edge1_Node000001_Node000002",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node2 [id="Node000002",label="ImGui_ImplVulkanH_Create\lWindowSwapChain",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui__impl__vulkan_8cpp.html#a36de611cc14b43e43b65f37187e9d637",tooltip=" "];
+  Node2 -> Node3 [id="edge2_Node000002_Node000003",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node3 [id="Node000003",label="ImGui_ImplVulkanH_Create\lOrResizeWindow",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui__impl__vulkan_8cpp.html#ac54bfe52fdbbd558dc461e3552c518c0",tooltip=" "];
+  Node3 -> Node4 [id="edge3_Node000003_Node000004",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node4 [id="Node000004",label="main",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui_2examples_2example__glfw__vulkan_2main_8cpp.html#a2c3f6775325c30275d11c6abee2db6a0",tooltip=" "];
+  Node3 -> Node5 [id="edge4_Node000003_Node000005",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node5 [id="Node000005",label="SetupVulkanWindow",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui_2examples_2example__glfw__vulkan_2main_8cpp.html#a4d5220e9b79fa1519a524beb13ebcf8a",tooltip=" "];
+  Node5 -> Node4 [id="edge5_Node000005_Node000004",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node3 -> Node6 [id="edge6_Node000003_Node000006",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node6 [id="Node000006",label="WndProc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui_2examples_2example__win32__vulkan_2main_8cpp.html#aa726a6316fd5b9e2520d1c71670ccc16",tooltip=" "];
+  Node1 -> Node7 [id="edge7_Node000001_Node000007",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node7 [id="Node000007",label="ImGui_ImplVulkanH_Destroy\lWindow",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui__impl__vulkan_8cpp.html#af4d7a2987aecd23a4ea05ae341998f94",tooltip=" "];
+  Node7 -> Node8 [id="edge8_Node000007_Node000008",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node8 [id="Node000008",label="CleanupVulkanWindow",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui_2examples_2example__glfw__vulkan_2main_8cpp.html#a6a857c74986732933a83c25216f8acb3",tooltip=" "];
+  Node8 -> Node4 [id="edge9_Node000008_Node000004",dir="back",color="steelblue1",style="solid",tooltip=" "];
+}

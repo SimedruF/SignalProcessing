@@ -1,0 +1,15 @@
+digraph "ImTextFindValidUtf8CodepointEnd"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir="RL";
+  Node1 [id="Node000001",label="ImTextFindValidUtf8CodepointEnd",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [id="edge1_Node000001_Node000002",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node2 [id="Node000002",label="ImGuiInputTextCallbackData\l::InsertChars",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structImGuiInputTextCallbackData.html#a9963937f48aba00466c2af404dad1e25",tooltip=" "];
+  Node1 -> Node3 [id="edge2_Node000001_Node000003",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node3 [id="Node000003",label="ImStb::STB_TEXTEDIT\l_INSERTCHARS",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$namespaceImStb.html#aeb78e41c47236924d5e2b28ce28d042e",tooltip=" "];
+  Node3 -> Node4 [id="edge3_Node000003_Node000004",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node4 [id="Node000004",label="ImStb::stb_textedit\l_replace",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$namespaceImStb.html#a603f4fbfbb2fea1f14029e86a0d5fb8c",tooltip=" "];
+}

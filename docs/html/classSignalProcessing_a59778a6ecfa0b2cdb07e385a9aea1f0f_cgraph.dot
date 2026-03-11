@@ -1,0 +1,15 @@
+digraph "SignalProcessing::ExportMLFeaturesToH5"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir="LR";
+  Node1 [id="Node000001",label="SignalProcessing::Export\lMLFeaturesToH5",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip="Exports feature vector and raw signal to HDF5."];
+  Node1 -> Node2 [id="edge1_Node000001_Node000002",color="steelblue1",style="solid",tooltip=" "];
+  Node2 [id="Node000002",label="SignalRecorder::addDouble\lVector",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classSignalRecorder.html#a3f978d3e8f1d426f2a78f1eb546359c8",tooltip=" "];
+  Node1 -> Node3 [id="edge2_Node000001_Node000003",color="steelblue1",style="solid",tooltip=" "];
+  Node3 [id="Node000003",label="SignalRecorder::addMetadata",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classSignalRecorder.html#aa25d5fd2db8112a2b657ab51bf6211a1",tooltip=" "];
+  Node1 -> Node4 [id="edge3_Node000001_Node000004",color="steelblue1",style="solid",tooltip=" "];
+  Node4 [id="Node000004",label="SignalProcessing::Export\lFeaturesToArray",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classSignalProcessing.html#a9a08a49cffeac6882c6b008171a1e0ea",tooltip="Exports features to a flat array for direct ML library input."];
+}

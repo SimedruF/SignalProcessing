@@ -1,0 +1,51 @@
+digraph "ImGuiWindow::ImGuiWindow"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir="LR";
+  Node1 [id="Node000001",label="ImGuiWindow::ImGuiWindow",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [id="edge1_Node000001_Node000002",color="steelblue1",style="solid",tooltip=" "];
+  Node2 [id="Node000002",label="ImDrawList::_SetDrawList\lSharedData",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structImDrawList.html#a65bf854d19ac43e60ad5c9b567a51962",tooltip=" "];
+  Node2 -> Node3 [id="edge2_Node000002_Node000003",color="steelblue1",style="solid",tooltip=" "];
+  Node3 [id="Node000003",label="ImVector::find_erase\l_unsorted",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structImVector.html#a07f501e40783436616156682ec668327",tooltip=" "];
+  Node3 -> Node4 [id="edge3_Node000003_Node000004",color="steelblue1",style="solid",tooltip=" "];
+  Node4 [id="Node000004",label="ImVector::erase_unsorted",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structImVector.html#a87a4cae517c156b73823c5cd5e86378a",tooltip=" "];
+  Node3 -> Node5 [id="edge4_Node000003_Node000005",color="steelblue1",style="solid",tooltip=" "];
+  Node5 [id="Node000005",label="ImVector::find",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structImVector.html#a406417c3efef769d4bee47df2188831a",tooltip=" "];
+  Node2 -> Node6 [id="edge5_Node000002_Node000006",color="steelblue1",style="solid",tooltip=" "];
+  Node6 [id="Node000006",label="ImVector::push_back",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structImVector.html#aab5df48e0711a48bd12f3206e08c4108",tooltip=" "];
+  Node6 -> Node7 [id="edge6_Node000006_Node000007",color="steelblue1",style="solid",tooltip=" "];
+  Node7 [id="Node000007",label="ImVector::_grow_capacity",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structImVector.html#a3a097635d464b1b70dc7d59996a88b28",tooltip=" "];
+  Node6 -> Node8 [id="edge7_Node000006_Node000008",color="steelblue1",style="solid",tooltip=" "];
+  Node8 [id="Node000008",label="ImVector::reserve",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structImVector.html#a0f14f5736c3372157856eebb67123b75",tooltip=" "];
+  Node1 -> Node9 [id="edge8_Node000001_Node000009",color="steelblue1",style="solid",tooltip=" "];
+  Node9 [id="Node000009",label="ImGuiWindow::GetID",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structImGuiWindow.html#a66400a63bc0b54d7d29e08d1b1b1a42b",tooltip=" "];
+  Node9 -> Node10 [id="edge9_Node000009_Node000010",color="steelblue1",style="solid",tooltip=" "];
+  Node10 [id="Node000010",label="ImVector::back",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structImVector.html#a2d80e87e81b1b01143c8d8be93e6fde1",tooltip=" "];
+  Node9 -> Node11 [id="edge10_Node000009_Node000011",color="steelblue1",style="solid",tooltip=" "];
+  Node11 [id="Node000011",label="ImGui::DebugHookIdInfo",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$namespaceImGui.html#a5487269f4cb9fb809fd3e797411ed2d7",tooltip=" "];
+  Node11 -> Node12 [id="edge11_Node000011_Node000012",color="steelblue1",style="solid",tooltip=" "];
+  Node12 [id="Node000012",label="ImGuiTextBuffer::append",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structImGuiTextBuffer.html#a9101840866a9e5408ea1e25a779a40dc",tooltip=" "];
+  Node11 -> Node13 [id="edge12_Node000011_Node000013",color="steelblue1",style="solid",tooltip=" "];
+  Node13 [id="Node000013",label="ImFormatStringToTempBuffer",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui_8cpp.html#a4f6d9c1be5c114ebb7b9400d2747bd37",tooltip=" "];
+  Node13 -> Node14 [id="edge13_Node000013_Node000014",color="steelblue1",style="solid",tooltip=" "];
+  Node14 [id="Node000014",label="ImFormatStringToTempBufferV",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui_8cpp.html#a7d2a77b9735185891f885970b1e54626",tooltip=" "];
+  Node14 -> Node15 [id="edge14_Node000014_Node000015",color="steelblue1",style="solid",tooltip=" "];
+  Node15 [id="Node000015",label="ImFormatStringV",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui_8cpp.html#a2e0022a073d369645a0daab17f823779",tooltip=" "];
+  Node14 -> Node16 [id="edge15_Node000014_Node000016",color="steelblue1",style="solid",tooltip=" "];
+  Node16 [id="Node000016",label="ImMin",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui__internal_8h.html#adc93cf74c11e3481d02b47c720a6f96e",tooltip=" "];
+  Node11 -> Node17 [id="edge16_Node000011_Node000017",color="steelblue1",style="solid",tooltip=" "];
+  Node17 [id="Node000017",label="ImVector::resize",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structImVector.html#ac371dd62e56ae486b1a5038cf07eee56",tooltip=" "];
+  Node17 -> Node7 [id="edge17_Node000017_Node000007",color="steelblue1",style="solid",tooltip=" "];
+  Node17 -> Node8 [id="edge18_Node000017_Node000008",color="steelblue1",style="solid",tooltip=" "];
+  Node11 -> Node18 [id="edge19_Node000011_Node000018",color="steelblue1",style="solid",tooltip=" "];
+  Node18 [id="Node000018",label="ImGuiTextBuffer::size",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structImGuiTextBuffer.html#a2811fcd43e0224eb3bd0f3464b634289",tooltip=" "];
+  Node9 -> Node19 [id="edge20_Node000009_Node000019",color="steelblue1",style="solid",tooltip=" "];
+  Node19 [id="Node000019",label="ImHashStr",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui_8cpp.html#ab6659b5d67f7a3369e099ce890e12223",tooltip=" "];
+  Node1 -> Node19 [id="edge21_Node000001_Node000019",color="steelblue1",style="solid",tooltip=" "];
+  Node1 -> Node20 [id="edge22_Node000001_Node000020",color="steelblue1",style="solid",tooltip=" "];
+  Node20 [id="Node000020",label="ImStrdup",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$imgui_8cpp.html#a23a8e1005c1db0b1a9ea2f613ed7b2e0",tooltip=" "];
+  Node1 -> Node6 [id="edge23_Node000001_Node000006",color="steelblue1",style="solid",tooltip=" "];
+}

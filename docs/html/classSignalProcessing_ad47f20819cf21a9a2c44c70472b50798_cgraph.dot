@@ -1,0 +1,11 @@
+digraph "SignalProcessing::GetSize"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir="LR";
+  Node1 [id="Node000001",label="SignalProcessing::GetSize",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip="Returns the current size of the vector."];
+  Node1 -> Node2 [id="edge1_Node000001_Node000002",color="steelblue1",style="solid",tooltip=" "];
+  Node2 [id="Node000002",label="SignalProcessing::GetIndex",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classSignalProcessing.html#a702efde99214362fce7c4325a432b0be",tooltip="Returns the current index."];
+}
